@@ -31,7 +31,7 @@ messages
 label volume=Full-0001 storage=File pool=Full
 run job=backup-bareos-fd yes
 wait
-update volume=Full-001 volstatus=Used
+update volume=Full-0001 volstatus=Used
 messages
 quit
 END_OF_DATA
@@ -43,6 +43,7 @@ check_for_zombie_jobs storage=File
 check_log -F 'Catalog record for Volume "Full-0001", Slot 0 successfully created.'
 check_log 'Termination:.*Backup OK'
 
+# add more data
 cp /usr/bin/[b,g,r,t]* tmp/data/
 
 cat <<END_OF_DATA >"$tmp/bconcmds"
