@@ -1,0 +1,116 @@
+#!/bin/bash
+#   BAREOS® - Backup Archiving REcovery Open Sourced
+#
+#   Copyright (C) 2019-2024 Bareos GmbH & Co. KG
+#
+#   This program is Free Software; you can redistribute it and/or
+#   modify it under the terms of version three of the GNU Affero General Public
+#   License as published by the Free Software Foundation and included
+#   in the file LICENSE.
+#
+#   This program is distributed in the hope that it will be useful, but
+#   WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+#   Affero General Public License for more details.
+#
+#   You should have received a copy of the GNU Affero General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+#   02110-1301, USA.
+
+set -e
+set -o pipefail
+set -u
+
+TestName=03-copy-remote
+
+#shellcheck source=../environment.in
+. ./environment
+
+#shellcheck source=../scripts/functions
+. "${rscripts}"/functions
+
+mkdir -p "${archivedir}-remote"
+find "${archivedir}-remote" -mindepth 1 -delete
+
+start_test
+
+cat <<END_OF_DATA >"$tmp/bconcmds_volumes"
+@$out /dev/null
+messages
+@$out $tmp/label_volumes1.out
+END_OF_DATA
+
+for V in $(seq -w 001 015);do
+cat <<END_OF_DATA >>"$tmp/bconcmds_volumes"
+label volume=RemoteCopyVolume${V} storage=RemoteFile pool=RemoteCopy
+update volume=RemoteCopyVolume${V} volstatus=Used
+END_OF_DATA
+done
+
+echo " === Prepare volumes === "
+run_bconsole "$tmp/bconcmds_volumes"
+echo " === Volumes prepared === "
+
+cat <<END_OF_DATA >"$tmp/bconcmds"
+@$out /dev/null
+messages
+@$out $tmp/remote_copy_log.out
+unmount storage=RemoteFile
+run job=copy-remote yes
+status director
+status client
+status storage=RemoteFile
+@sleep 3
+END_OF_DATA
+
+echo " === Running copy 1 === "
+run_bconsole "$tmp/bconcmds"
+
+echo " === Purge volumes and mount for copy 1 === "
+for V in $(seq -w 001 015);do
+bin/bconsole <<< "@$out /dev/null
+messages
+@$out $tmp/purge_volumes.out
+@sleep 3
+purge volume=RemoteCopyVolume${V} yes
+reload
+mount storage=RemoteFile
+"
+done
+
+bin/bconsole <<< "@$out /dev/null
+messages
+update volume=RemoteCopyVolume015 volstatus=Used
+unmount storage=RemoteFile
+"
+echo " === End copy 1 === "
+echo
+
+# Rerun a second time the job and wait the SD to free up or add some new volumes
+echo " === Running copy 2 on forced purged volumes === "
+cat <<END_OF_DATA >"$tmp/bconcmds2"
+@$out /dev/null
+messages
+@$out $tmp/remote_copy_log2.out
+unmount storage=RemoteFile
+run job=copy-remote yes
+status director
+status client
+status storage=RemoteFile
+END_OF_DATA
+
+run_bconsole "$tmp/bconcmds2"
+
+echo " === Add new volumes and mount for copy 2 === "
+for V in $(seq -w 021 035);do
+bin/bconsole <<< "@$out $tmp/label_volumes2.out
+@sleep 3
+label volume=RemoteCopyVolume${V} pool=RemoteCopy storage=RemoteFile
+reload
+mount storage=RemoteFile
+"
+done
+
+
+end_test

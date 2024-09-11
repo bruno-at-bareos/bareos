@@ -1,0 +1,70 @@
+#!/bin/bash
+set -e
+set -o pipefail
+set -u
+
+TestName=01-backup
+
+#shellcheck source=../environment.in
+. ./environment
+
+#shellcheck source=../scripts/functions
+. "${rscripts}"/functions
+
+log="$tmp/$TestName.log"
+
+check_log() {
+  if ! grep -q "$@" "$log"; then
+    echo "'$*' not found in $log" >&2
+    estat=1
+  fi
+}
+
+setup_data
+
+start_test
+
+cat <<END_OF_DATA >"$tmp/bconcmds"
+@$out /dev/null
+messages
+@$out $log
+label volume=Full-0001 storage=File pool=Full
+run job=backup-bareos-fd yes
+wait
+update volume=Full-001 volstatus=Used
+messages
+quit
+END_OF_DATA
+
+run_bconsole "$tmp/bconcmds"
+
+check_for_zombie_jobs storage=File
+
+check_log -F 'Catalog record for Volume "Full-0001", Slot 0 successfully created.'
+check_log 'Termination:.*Backup OK'
+
+cp /usr/bin/[b,g,r,t]* tmp/data/
+
+cat <<END_OF_DATA >"$tmp/bconcmds"
+@$out /dev/null
+messages
+@$out $log
+label volume=Full-0002 storage=File pool=Full
+run job=backup-bareos-fd pool=Full yes
+wait
+update volume=Full-0002 volstatus=Used
+update volume=Full-0003 volstatus=Used
+update volume=Full-0004 volstatus=Used
+update volume=Full-0005 volstatus=Used
+update volume=Full-0006 volstatus=Used
+update volume=Full-0007 volstatus=Used
+update volume=Full-0008 volstatus=Used
+messages
+quit
+END_OF_DATA
+
+run_bconsole "$tmp/bconcmds"
+
+check_log -F 'Created new Volume "Full-0005" in catalog.'
+
+end_test

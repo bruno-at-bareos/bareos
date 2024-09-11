@@ -1,0 +1,104 @@
+#!/bin/bash
+#   BAREOS® - Backup Archiving REcovery Open Sourced
+#
+#   Copyright (C) 2019-2024 Bareos GmbH & Co. KG
+#
+#   This program is Free Software; you can redistribute it and/or
+#   modify it under the terms of version three of the GNU Affero General Public
+#   License as published by the Free Software Foundation and included
+#   in the file LICENSE.
+#
+#   This program is distributed in the hope that it will be useful, but
+#   WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+#   Affero General Public License for more details.
+#
+#   You should have received a copy of the GNU Affero General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+#   02110-1301, USA.
+
+set -e
+set -o pipefail
+set -u
+
+TestName=02-copy
+
+#shellcheck source=../environment.in
+. ./environment
+
+#shellcheck source=../scripts/functions
+. "${rscripts}"/functions
+
+copy_log="$tmp/copy_log.out"
+query_results="$tmp/query_results.out"
+
+start_test
+
+cat <<END_OF_DATA >"$tmp/bconcmds"
+@$out /dev/null
+messages
+@$out $copy_log
+label volume=FullCopy-0001 storage=File2 pool=FullCopy
+run job=copy pool=Full nextpool=FullCopy yes
+wait
+messages
+@$out $query_results
+sqlquery
+SELECT type FROM job WHERE jobid=5;
+.
+quit
+END_OF_DATA
+
+
+run_bconsole "$tmp/bconcmds"
+
+expect_grep "Termination:.*Copying OK" \
+            "$copy_log" \
+            "Copy job did not finish well."
+
+expect_grep "|.*C.*|" \
+            "$query_results" \
+            "Copy job does not have the expected type."
+
+expect_grep "JobId 3: BeforeJob: prevjobid=\*None\* newjobid=\*None\*" \
+            "$copy_log" \
+            "Before runscript does not return expected previous jobid (%O) and new jobid (%N)."
+
+expect_grep "JobId 3: AfterJob: prevjobid=\*None\* newjobid=\*None\*" \
+            "$copy_log" \
+            "After runscript does not return expected previous jobid (%O) and new jobid (%N)."
+
+expect_grep "JobId 4: BeforeJob: prevjobid=1 newjobid=5" \
+            "$copy_log" \
+            "Before runscript does not return expected previous jobid (%O) and new jobid (%N)."
+
+expect_grep "JobId 4: AfterJob: prevjobid=1 newjobid=5" \
+            "$copy_log" \
+            "After runscript does not return expected previous jobid (%O) and new jobid (%N)."
+
+cat <<END_OF_DATA >"$tmp/bconcmds"
+@$out $query_results
+prune volume=Full-0001 yes
+sqlquery
+SELECT count(jobid) FROM job WHERE type='c';
+SELECT type FROM job WHERE jobid=5;
+.
+messages
+quit
+END_OF_DATA
+
+# run_bconsole "$tmp/bconcmds"
+#
+#
+# expect_grep "|     3 |" \
+#             "$query_results" \
+#             "Copy jobs were not deleted appropriately after backup volume pruning."
+#
+# expect_grep "|.*B.*|" \
+#             "$query_results" \
+#             "Copy job was not upgraded to backup after original backup was pruned."
+#
+# check_for_zombie_jobs storage=File
+
+end_test
