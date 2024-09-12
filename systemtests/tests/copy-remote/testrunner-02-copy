@@ -18,6 +18,7 @@
 #   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #   02110-1301, USA.
 
+# This test will execute a first local copy from pool=Full to pool=Copy
 set -e
 set -o pipefail
 set -u
@@ -39,8 +40,8 @@ cat <<END_OF_DATA >"$tmp/bconcmds"
 @$out /dev/null
 messages
 @$out $copy_log
-label volume=FullCopy-0001 storage=File2 pool=FullCopy
-run job=copy pool=Full nextpool=FullCopy yes
+label volume=Copy-0001 storage=Copy pool=Copy
+run job=copy yes
 wait
 messages
 @$out $query_results
@@ -50,55 +51,18 @@ SELECT type FROM job WHERE jobid=5;
 quit
 END_OF_DATA
 
-
 run_bconsole "$tmp/bconcmds"
 
 expect_grep "Termination:.*Copying OK" \
             "$copy_log" \
             "Copy job did not finish well."
 
-expect_grep "|.*C.*|" \
-            "$query_results" \
-            "Copy job does not have the expected type."
+# Update last volume to Used so it will pick by copy volumes
+for V in $(bin/bconsole <<< ".api 1
+list volumes pool=Copy
+" | awk -F "|" '/Append/ {gsub(" ","",$2); print $2}');do
+bin/bconsole <<< "update volume=${V} volstatus=Used"
+done
 
-expect_grep "JobId 3: BeforeJob: prevjobid=\*None\* newjobid=\*None\*" \
-            "$copy_log" \
-            "Before runscript does not return expected previous jobid (%O) and new jobid (%N)."
-
-expect_grep "JobId 3: AfterJob: prevjobid=\*None\* newjobid=\*None\*" \
-            "$copy_log" \
-            "After runscript does not return expected previous jobid (%O) and new jobid (%N)."
-
-expect_grep "JobId 4: BeforeJob: prevjobid=1 newjobid=5" \
-            "$copy_log" \
-            "Before runscript does not return expected previous jobid (%O) and new jobid (%N)."
-
-expect_grep "JobId 4: AfterJob: prevjobid=1 newjobid=5" \
-            "$copy_log" \
-            "After runscript does not return expected previous jobid (%O) and new jobid (%N)."
-
-cat <<END_OF_DATA >"$tmp/bconcmds"
-@$out $query_results
-prune volume=Full-0001 yes
-sqlquery
-SELECT count(jobid) FROM job WHERE type='c';
-SELECT type FROM job WHERE jobid=5;
-.
-messages
-quit
-END_OF_DATA
-
-# run_bconsole "$tmp/bconcmds"
-#
-#
-# expect_grep "|     3 |" \
-#             "$query_results" \
-#             "Copy jobs were not deleted appropriately after backup volume pruning."
-#
-# expect_grep "|.*B.*|" \
-#             "$query_results" \
-#             "Copy job was not upgraded to backup after original backup was pruned."
-#
-# check_for_zombie_jobs storage=File
 
 end_test

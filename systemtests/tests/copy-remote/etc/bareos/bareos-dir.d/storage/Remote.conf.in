@@ -1,0 +1,8 @@
+Storage {
+  Name = Remote
+  Address = @hostname@
+  Password = "@sd_password@"
+  Device = RemoteStorage
+  Media Type = Remote
+  SD Port = @sd2_port@
+}

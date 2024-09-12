@@ -1,9 +1,0 @@
-Storage {
-  Name = RemoteFile
-  Address = @hostname@
-  Password = "@sd_password@"
-  Device = RemoteFileStorage
-  Device = RemoteFileStorage2
-  Media Type = RemoteFile
-  SD Port = @sd2_port@
-}

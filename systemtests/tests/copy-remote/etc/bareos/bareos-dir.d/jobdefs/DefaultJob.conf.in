@@ -6,10 +6,11 @@ JobDefs {
   FileSet = "SelfTest"
   Storage = File
   Messages = Standard
-  Pool = Incremental
+  Pool = Full
   Priority = 10
   Write Bootstrap = "@working_dir@/%c.bsr"
-  Full Backup Pool = Full                  # write Full Backups into "Full" Pool
-  Differential Backup Pool = Differential  # write Diff Backups into "Differential" Pool
-  Incremental Backup Pool = Incremental    # write Incr Backups into "Incremental" Pool
+  Full Backup Pool = Full
+  Differential Backup Pool = Full
+  Incremental Backup Pool = Full
+  Next Pool = Copy
 }

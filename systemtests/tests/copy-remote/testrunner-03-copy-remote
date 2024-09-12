@@ -18,6 +18,12 @@
 #   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 #   02110-1301, USA.
 
+# this test will execute a copy on remote storage a first time from Full pool.
+# a second time from the Copy pool.
+# This remote storage as predefined volumes (created then set to Used to emulate a previous backup)
+# they have to be manually pruned, and then mounted.
+# this test if the director, source reading sd and writing remote destination can handle the case.
+
 set -e
 set -o pipefail
 set -u
@@ -30,21 +36,23 @@ TestName=03-copy-remote
 #shellcheck source=../scripts/functions
 . "${rscripts}"/functions
 
+# create remote storage archivedir
 mkdir -p "${archivedir}-remote"
 find "${archivedir}-remote" -mindepth 1 -delete
 
 start_test
 
+# label an set of volumes to put their volstatus to used
 cat <<END_OF_DATA >"$tmp/bconcmds_volumes"
 @$out /dev/null
 messages
 @$out $tmp/label_volumes1.out
 END_OF_DATA
 
-for V in $(seq -w 001 015);do
+for V in $(seq -w 001 026);do
 cat <<END_OF_DATA >>"$tmp/bconcmds_volumes"
-label volume=RemoteCopyVolume${V} storage=RemoteFile pool=RemoteCopy
-update volume=RemoteCopyVolume${V} volstatus=Used
+label volume=RemoteCopy-${V} storage=Remote pool=RemoteCopy
+update volume=RemoteCopy-${V} volstatus=Used
 END_OF_DATA
 done
 
@@ -56,59 +64,60 @@ cat <<END_OF_DATA >"$tmp/bconcmds"
 @$out /dev/null
 messages
 @$out $tmp/remote_copy_log.out
-unmount storage=RemoteFile
-run job=copy-remote yes
+unmount storage=Remote
+run job=copy-remote pool=Full yes
 status director
 status client
-status storage=RemoteFile
+status storage=Remote
 @sleep 3
 END_OF_DATA
 
 echo " === Running copy 1 === "
 run_bconsole "$tmp/bconcmds"
 
+# free up volume by volume to have label request each time and force dir and sd to wait
 echo " === Purge volumes and mount for copy 1 === "
-for V in $(seq -w 001 015);do
+for V in $(seq -w 001 026);do
 bin/bconsole <<< "@$out /dev/null
 messages
 @$out $tmp/purge_volumes.out
 @sleep 3
-purge volume=RemoteCopyVolume${V} yes
+purge volume=RemoteCopy-${V} yes
 reload
-mount storage=RemoteFile
+mount storage=Remote
 "
 done
 
 bin/bconsole <<< "@$out /dev/null
 messages
-update volume=RemoteCopyVolume015 volstatus=Used
+update volume=RemoteCopy-015 volstatus=Used
 unmount storage=RemoteFile
 "
 echo " === End copy 1 === "
 echo
 
 # Rerun a second time the job and wait the SD to free up or add some new volumes
-echo " === Running copy 2 on forced purged volumes === "
+echo " === Running copy 2 on newly created volumes === "
 cat <<END_OF_DATA >"$tmp/bconcmds2"
 @$out /dev/null
 messages
 @$out $tmp/remote_copy_log2.out
-unmount storage=RemoteFile
+unmount storage=Remote
 run job=copy-remote yes
 status director
 status client
-status storage=RemoteFile
+status storage=Remote
 END_OF_DATA
 
 run_bconsole "$tmp/bconcmds2"
 
 echo " === Add new volumes and mount for copy 2 === "
-for V in $(seq -w 021 035);do
+for V in $(seq -w 031 056);do
 bin/bconsole <<< "@$out $tmp/label_volumes2.out
 @sleep 3
-label volume=RemoteCopyVolume${V} pool=RemoteCopy storage=RemoteFile
+label volume=RemoteCopy-${V} pool=RemoteCopy storage=Remote
 reload
-mount storage=RemoteFile
+mount storage=Remote
 "
 done
 

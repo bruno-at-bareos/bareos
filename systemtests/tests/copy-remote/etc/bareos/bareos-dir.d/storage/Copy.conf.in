@@ -1,9 +1,8 @@
 Storage {
-  Name = File
+  Name = Copy
   Address = @hostname@
   Password = "@sd_password@"
-  Device = FileStorage
-  Media Type = File
+  Device = CopyStorage
+  Media Type = Copy
   SD Port = @sd_port@
 }
-
