@@ -60,7 +60,7 @@ expect_grep "Termination:.*Copying OK" \
 # Update last volume to Used so it will pick by copy volumes
 for V in $(bin/bconsole <<< ".api 1
 list volumes pool=Copy
-" | awk -F "|" '/Append/ {gsub(" ","",$2); print $2}');do
+" | awk -F "|" '/Copy-/ {gsub(" ","",$2); print $2}');do
 bin/bconsole <<< "update volume=${V} volstatus=Used"
 done
 

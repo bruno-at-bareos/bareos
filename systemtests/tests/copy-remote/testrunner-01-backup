@@ -44,10 +44,13 @@ check_log() {
 }
 
 setup_data
+rm -rf ${tmp}/data/*
+# create first file
+dd if=/dev/urandom of="${tmp}/data/file-0001" bs=100M count=1
 
 start_test
 # initial full
-cat <<END_OF_DATA >"$tmp/bconcmds"
+cat <<END_OF_DATA >"${tmp}/bconcmds"
 @$out /dev/null
 messages
 @$out $log
@@ -59,20 +62,19 @@ messages
 quit
 END_OF_DATA
 
-run_bconsole "$tmp/bconcmds"
+run_bconsole "${tmp}/bconcmds"
 
 check_for_zombie_jobs storage=File
 
 check_log -F 'Catalog record for Volume "Full-0001", Slot 0 successfully created.'
 check_log 'Termination:.*Backup OK'
 
-# add enough more data and run incremental but in a deterministic way.
-for D in $(seq -w 001 100);do
-  dd if=/dev/urandom of=tmp/data/file-${D} bs=1M count=1
+# add enough more big data and run incremental but in a deterministic way.
+for D in $(seq -w 0002 0010);do
+  dd if=/dev/urandom of="${tmp}/data/file-${D}" bs=100M count=1
 done
 
-
-cat <<END_OF_DATA >"$tmp/bconcmds"
+cat <<END_OF_DATA >"${tmp}/bconcmds"
 @$out /dev/null
 messages
 @$out $log
@@ -83,12 +85,13 @@ messages
 quit
 END_OF_DATA
 
-run_bconsole "$tmp/bconcmds"
+run_bconsole "${tmp}/bconcmds"
 
-# Update last volume to Used so it will pick by copy volumes
+# Find the name of last volume
+# force status to Used so it will pick by copy volumes
 for V in $(bin/bconsole <<< ".api 1
 list volumes pool=Full
-" | awk -F "|" '/Append/ {gsub(" ","",$2); print $2}');do
+" | awk -F "|" '/Full-/ {gsub(" ","",$2); print $2}');do
 bin/bconsole <<< "update volume=${V} volstatus=Used"
 done
 

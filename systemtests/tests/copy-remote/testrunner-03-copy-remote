@@ -49,7 +49,7 @@ messages
 @$out $tmp/label_volumes1.out
 END_OF_DATA
 
-for V in $(seq -w 001 026);do
+for V in $(seq -w 0001 0100);do
 cat <<END_OF_DATA >>"$tmp/bconcmds_volumes"
 label volume=RemoteCopy-${V} storage=Remote pool=RemoteCopy
 update volume=RemoteCopy-${V} volstatus=Used
@@ -65,23 +65,23 @@ cat <<END_OF_DATA >"$tmp/bconcmds"
 messages
 @$out $tmp/remote_copy_log.out
 unmount storage=Remote
-run job=copy-remote pool=Full yes
+run job=copy-remote yes
 status director
 status client
 status storage=Remote
-@sleep 3
+@sleep 300
 END_OF_DATA
 
 echo " === Running copy 1 === "
 run_bconsole "$tmp/bconcmds"
 
-# free up volume by volume to have label request each time and force dir and sd to wait
+# Free up volume by volume to have label request each time and force dir and sd to wait
 echo " === Purge volumes and mount for copy 1 === "
-for V in $(seq -w 001 026);do
+for V in $(seq -w 0001 0100);do
 bin/bconsole <<< "@$out /dev/null
 messages
 @$out $tmp/purge_volumes.out
-@sleep 3
+@sleep 180
 purge volume=RemoteCopy-${V} yes
 reload
 mount storage=Remote
@@ -90,11 +90,27 @@ done
 
 bin/bconsole <<< "@$out /dev/null
 messages
-update volume=RemoteCopy-015 volstatus=Used
-unmount storage=RemoteFile
 "
+
+for V in $(bin/bconsole <<< ".api 1
+list volumes pool=RemoteCopy
+" | awk -F "|" '/RemoteCopy-/ {gsub(" ","",$2); print $2}');do
+echo "${V}"
+done
+# update last one
+bin/bconsole <<< "update volume=${V} volstatus=Used"
+
+
 echo " === End copy 1 === "
 echo
+
+# to emulate the customer case we create another bunch of volume in state Used
+for V in $(seq -w 0101 0200);do
+cat <<END_OF_DATA >>"$tmp/bconcmds_volumes"
+label volume=RemoteCopy-${V} storage=Remote pool=RemoteCopy
+update volume=RemoteCopy-${V} volstatus=Used
+END_OF_DATA
+done
 
 # Rerun a second time the job and wait the SD to free up or add some new volumes
 echo " === Running copy 2 on newly created volumes === "
@@ -102,23 +118,31 @@ cat <<END_OF_DATA >"$tmp/bconcmds2"
 @$out /dev/null
 messages
 @$out $tmp/remote_copy_log2.out
-unmount storage=Remote
+unmount storage=Remote pool=Full
 run job=copy-remote yes
 status director
 status client
 status storage=Remote
+@sleep 10
+purge volume=RemoteCopy-0101 yes
+mount storage=Remote
+reload
 END_OF_DATA
 
 run_bconsole "$tmp/bconcmds2"
 
-echo " === Add new volumes and mount for copy 2 === "
-for V in $(seq -w 031 056);do
-bin/bconsole <<< "@$out $tmp/label_volumes2.out
-@sleep 3
-label volume=RemoteCopy-${V} pool=RemoteCopy storage=Remote
+echo " === Add new volumes when needed and mount for copy 2 === "
+
+V=102
+while [ "$(bin/bconsole <<< ".status dir running" | grep -c '    17')" -ge 1 ]
+do
+  V=$(( V + 1 ))
+  VOL=$(printf "RemoteCopy-%04d" ${V})
+  bin/bconsole <<< "purge volume=${VOL} pool=RemoteCopy storage=Remote
 reload
 mount storage=Remote
 "
+sleep $(( 300 + V ))
 done
 
 
