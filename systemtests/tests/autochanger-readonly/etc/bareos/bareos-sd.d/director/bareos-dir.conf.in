@@ -1,0 +1,6 @@
+Director {
+  Name = bareos-dir
+  Password = "@sd_password@"
+  TLS Require = no
+  TLS Enable = no
+}

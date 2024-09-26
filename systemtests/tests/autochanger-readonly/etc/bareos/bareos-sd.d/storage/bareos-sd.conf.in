@@ -1,0 +1,11 @@
+Storage {
+  Name = bareos-sd
+  Working Directory =  "@working_dir@"
+  SD Port = @sd_port@
+  @sd_backend_config@
+  Checkpoint Interval = 10
+  Just In Time Reservation = Yes
+  Maximum Bandwidth Per Job = 100kb/s
+  TLS Require = no
+  TLS Enable = no
+}

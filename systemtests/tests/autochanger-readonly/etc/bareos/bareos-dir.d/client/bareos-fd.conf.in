@@ -1,0 +1,18 @@
+Client {
+  Name = bareos-fd
+  Address = @hostname@
+  Password = "@fd_password@"          # password for FileDaemon
+  FD PORT = @fd_port@
+  MaximumConcurrentJobs=2000
+  TLS Require = No
+  TLS Enable = No
+}
+
+Client {
+  Name = anotherclient
+  Address = @hostname@
+  Password = "@fd_password@"
+  FD PORT = @fd2_port@
+  TLS Require = No
+  TLS Enable = No
+}
