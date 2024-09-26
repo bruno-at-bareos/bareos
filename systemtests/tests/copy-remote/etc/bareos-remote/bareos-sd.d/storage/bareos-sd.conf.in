@@ -3,4 +3,6 @@ Storage {
   Working Directory =  "@working_dir@"
   SD Port = @sd2_port@
   @sd_backend_config@
+  Maximum Bandwidth Per Job = 128 k/s
+  SD Connect Timeout = 300
 }
