@@ -5,5 +5,4 @@ Storage {
   Device = RemoteStorage
   Media Type = Remote
   SD Port = @sd2_port@
-  SD Connect Timeout = 300
 }

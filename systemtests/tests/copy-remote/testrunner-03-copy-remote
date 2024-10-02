@@ -44,40 +44,44 @@ start_test
 
 # label an set of volumes to put their volstatus to used
 cat <<END_OF_DATA >"$tmp/bconcmds_volumes"
-@$out /dev/null
+@out /dev/null
 messages
-@$out $tmp/label_volumes1.out
+@out ${tmp}/label_volumes1.out
 END_OF_DATA
 
-for V in $(seq -w 0001 0200); do
-  cat <<END_OF_DATA >>"$tmp/bconcmds_volumes"
+for V in $(seq -w 0001 0005); do
+  cat <<END_OF_DATA >>"${tmp}/bconcmds_volumes"
 label volume=RemoteCopy-${V} storage=Remote pool=RemoteCopy
 update volume=RemoteCopy-${V} volstatus=Used
 END_OF_DATA
 done
-echo "unmount storage=Remote" >>"$tmp/bconcmds_volumes"
+echo "unmount storage=Remote" >>"${tmp}/bconcmds_volumes"
 
 echo " === Prepare volumes === "
-run_bconsole "$tmp/bconcmds_volumes"
+run_bconsole "${tmp}/bconcmds_volumes"
 echo " === Volumes prepared === "
 
-cat <<END_OF_DATA >"$tmp/bconcmds"
-@$out /dev/null
+cat <<END_OF_DATA >"${tmp}/bconcmds"
+@out /dev/null
 messages
-@$out $tmp/remote_copy_log.out
+@out ${tmp}/remote_copy_log.out
 run job=copy-remote yes
 status director
 status client
 status storage=Remote
-@sleep 10
+@echo waiting 120s first volume
+@sleep 120
 END_OF_DATA
 
 echo " === Running copy 1 === "
-run_bconsole "$tmp/bconcmds"
+run_bconsole "${tmp}/bconcmds"
+echo "waiting 120s first volume"
+sleep 120
+
 
 # Free up volume by volume to have label request each time and force dir and sd to wait
 echo " === Purge volumes and mount for copy 1 === "
-for V in $(seq -w 0001 0126); do
+for V in $(seq -w 0001 0005); do
   bin/bconsole <<<"@$out /dev/null
 messages
 @$out $tmp/purge_volumes.out
@@ -85,7 +89,8 @@ purge volume=RemoteCopy-${V} yes
 reload
 mount storage=Remote
 "
-  wait=$((RANDOM % 1000))
+  wait=$(( 180 + RANDOM % 100))
+  echo "Next volume in ${wait}s"
   sleep ${wait}
 done
 
@@ -104,19 +109,30 @@ bin/bconsole <<<"update volume=${V} volstatus=Used"
 echo " === End copy 1 === "
 echo
 
+
 # # to emulate the customer case we create another bunch of volume in state Used
-for V in $(seq -w 0200 0326); do
-  cat <<END_OF_DATA >>"$tmp/bconcmds_volumes"
+cat <<END_OF_DATA >"${tmp}/bconcmds_volumes"
+@out /dev/null
+messages
+@out ${tmp}/label_volumes2.out
+END_OF_DATA
+
+for V in $(seq -w 0006 0010); do
+  cat <<END_OF_DATA >>"${tmp}/bconcmds_volumes"
 label volume=RemoteCopy-${V} storage=Remote pool=RemoteCopy
 update volume=RemoteCopy-${V} volstatus=Used
 END_OF_DATA
 done
 
-echo " === Running copy 2 in // === "
-cat <<END_OF_DATA >"$tmp/bconcmds2"
-@$out /dev/null
+echo " === Prepare volumes 2 === "
+run_bconsole "${tmp}/bconcmds_volumes"
+echo " === Volumes prepared 2 === "
+
+echo " === Running copy 2 === "
+cat <<END_OF_DATA >"${tmp}/bconcmds2"
+@out /dev/null
 messages
-@$out $tmp/remote_copy_log2.out
+@out ${tmp}/remote_copy_log2.out
 run job=copy-remote pool=Full yes
 status director
 status client
@@ -124,9 +140,9 @@ status storage=Remote
 @sleep 10
 END_OF_DATA
 
-run_bconsole "$tmp/bconcmds2"
+run_bconsole "${tmp}/bconcmds2"
 
-V=200
+V=6
 while [ "$(bin/bconsole <<<".status dir running" | grep -c '    17')" -ge 1 ]; do
   V=$((V + 1))
   VOL=$(printf "RemoteCopy-%04d" ${V})
@@ -134,7 +150,7 @@ while [ "$(bin/bconsole <<<".status dir running" | grep -c '    17')" -ge 1 ]; d
 reload
 mount storage=Remote
 "
-  sleep $((RANDOM % 1000))
+  sleep $(( 60 + RANDOM % 60))
 done
 
 end_test

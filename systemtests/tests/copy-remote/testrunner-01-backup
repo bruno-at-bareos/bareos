@@ -34,11 +34,11 @@ TestName=01-backup
 #shellcheck source=../scripts/functions
 . "${rscripts}"/functions
 
-log="$tmp/$TestName.log"
+log="${tmp}/${TestName}.log"
 
 check_log() {
-  if ! grep -q "$@" "$log"; then
-    echo "'$*' not found in $log" >&2
+  if ! grep -q "$@" "${log}"; then
+    echo "'$*' not found in ${log}" >&2
     estat=1
   fi
 }
@@ -46,14 +46,14 @@ check_log() {
 setup_data
 rm -rf ${tmp}/data/*
 # create first file
-dd if=/dev/urandom of="${tmp}/data/file-0001" bs=100M count=1
+dd if=/dev/urandom of="${tmp}/data/file-001" bs=1M count=1
 
 start_test
 # initial full
 cat <<END_OF_DATA >"${tmp}/bconcmds"
 @$out /dev/null
 messages
-@$out $log
+@$out ${log}
 label volume=Full-0001 storage=File pool=Full
 run job=backup-bareos-fd yes
 wait
@@ -70,14 +70,14 @@ check_log -F 'Catalog record for Volume "Full-0001", Slot 0 successfully created
 check_log 'Termination:.*Backup OK'
 
 # add enough more big data and run incremental but in a deterministic way.
-for D in $(seq -w 0002 0010);do
-  dd if=/dev/urandom of="${tmp}/data/file-${D}" bs=100M count=1
+for D in $(seq -w 002 005);do
+  dd if=/dev/urandom of="${tmp}/data/file-${D}" bs=1M count=1
 done
 
 cat <<END_OF_DATA >"${tmp}/bconcmds"
 @$out /dev/null
 messages
-@$out $log
+@$out ${log}
 label volume=Full-0002 storage=File pool=Full
 run job=backup-bareos-fd pool=Full yes
 wait
@@ -95,7 +95,7 @@ list volumes pool=Full
 bin/bconsole <<< "update volume=${V} volstatus=Used"
 done
 
-check_log -F "Created new Volume \"${V}\" in catalog."
+check_log -F 'Catalog record for Volume "Full-0002", Slot 0 successfully created.'
 check_log 'Termination:.*Backup OK'
 
 end_test
