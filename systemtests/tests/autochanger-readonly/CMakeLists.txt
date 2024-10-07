@@ -22,10 +22,10 @@ if(AUTOCHANGER_TEST_ENABLED)
   create_systemtest(${SYSTEMTEST_PREFIX} ${BASENAME})
   # Make sure these tests run sequentially.
   set_tests_properties(
-    ${SYSTEMTEST_PREFIX}autochanger:setup
-    ${SYSTEMTEST_PREFIX}autochanger:backup-restore
-    ${SYSTEMTEST_PREFIX}autochanger:label-release-autoselect
-    ${SYSTEMTEST_PREFIX}autochanger:cleanup
+    ${SYSTEMTEST_PREFIX}autochanger-readonly:setup
+    ${SYSTEMTEST_PREFIX}autochanger-readonly:backup-restore
+    ${SYSTEMTEST_PREFIX}autochanger-readonly:label-release-autoselect
+    ${SYSTEMTEST_PREFIX}autochanger-readonly:cleanup
     PROPERTIES RESOURCE_LOCK autochanger_resource
   )
 else()

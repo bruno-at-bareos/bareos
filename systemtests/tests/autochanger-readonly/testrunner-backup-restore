@@ -3,6 +3,8 @@ set -e
 set -o pipefail
 set -u
 
+# This test search to reproduce the error 
+
 TestName="$(basename "$(pwd)")"
 export TestName
 
