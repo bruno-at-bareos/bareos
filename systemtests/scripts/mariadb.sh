@@ -55,7 +55,7 @@ mariadbd_init()
     # initialize mariadb db
     if ${MARIADB_DAEMON_BINARY} --verbose --help | grep -q initialize-insecure; then
         echo "MariaDB init with --initialize-insecure"
-        ${MARIADB_DAEMON_BINARY} --defaults-file=mariadbdefaults --initialize-insecure --user="${USER}" 2>&1 | tee mariadb/mariadb_init.log
+        ${MARIADB_DAEMON_BINARY} --defaults-file=mariadbdefaults --initialize-insecure --user="${USER}" --datadir="mariadb/data" 2>&1 | tee mariadb/mariadb_init.log
         {
             echo "[client]"
             echo "socket=${dbHost}/mariadb.sock"
@@ -64,7 +64,7 @@ mariadbd_init()
         MARIADB_CLIENT="${MARIADB_CLIENT_BINARY}} --defaults-file=my.cnf"
     else
         echo "MariaDBL init with ${MARIADB_INSTALL_DB_SCRIPT}"
-        ${MARIADB_INSTALL_DB_SCRIPT} --auth-root-authentication-method=socket --user="${USER}" --auth-root-socket-user="${USER}" --defaults-file=mariadbdefaults > mariadb/mariadb_init.log
+        ${MARIADB_INSTALL_DB_SCRIPT} --auth-root-authentication-method=socket --user="${USER}" --auth-root-socket-user="${USER}" --defaults-file=mariadbdefaults --datadir="mariadb/data" > mariadb/mariadb_init.log
         {
             echo "[client]"
             echo "socket=${dbHost}/mariadb.sock"
