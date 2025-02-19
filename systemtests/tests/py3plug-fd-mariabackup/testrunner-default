@@ -18,7 +18,7 @@ export TestName
 skip_if_root
 
 JobName=backup-bareos-fd
-MARIABACKUP="${MARIADB_BACKUP_BINARY} --defaults-file=mysqldefaults"
+MARIABACKUP="${MARIADB_BACKUP_BINARY} --defaults-file=mariadbdefaults"
 mariabackup_test_db="${db_name}_mariabackup"
 
 #shellcheck source=../scripts/mariadb.sh
