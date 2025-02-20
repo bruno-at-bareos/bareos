@@ -27,8 +27,8 @@ skip_if_root
 
 start_test
 
-mariadbd_init
-mariadbd_server_start
+mariadb_init
+mariadb_server_start
 
 echo "create database ${test_db_name}" | ${MARIADB_CLIENT}
 echo "CREATE TABLE test ( id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, data VARCHAR(100), created TIMESTAMP DEFAULT NOW())  " | ${MARIADB_CLIENT} "${test_db_name}"
@@ -44,24 +44,24 @@ llist jobs job=$JobName
 END_OF_DATA
 
 run_bareos "$@"
-check_log $tmp/log1.out
+check_log ${tmp}/log1.out
 
 # insert data and run incremental
 echo "insert into test (data) VALUES ('test entry 2') " | ${MARIADB_CLIENT} "${test_db_name}"
 
 cat <<END_OF_DATA2 >"$tmp/bconcmds"
-@$out $tmp/log1i.out
+@$out ${tmp}/log1i.out
 @# run incremental again without any new data
-run job=$JobName yes
+run job=${JobName} yes
 wait
 status dir
 END_OF_DATA2
 
 run_bareos "$@"
-check_log $tmp/log1i.out
+check_log ${tmp}/log1i.out
 
-cat <<END_OF_DATA3 >"$tmp/bconcmds"
-@$out $tmp/log2.out
+cat <<END_OF_DATA3 >"${tmp}/bconcmds"
+@$out ${tmp}/log2.out
 restore restorejob=RestoreFile client=bareos-fd fileset=bareos_mariadb_dump yes select all done
 wait
 status dir
@@ -69,7 +69,7 @@ llist jobs job=RestoreFile
 END_OF_DATA3
 
 run_bareos "$@"
-check_log $tmp/log2.out
+check_log ${tmp}/log2.out
 
 check_for_zombie_jobs storage=File
 stop_bareos
@@ -99,6 +99,6 @@ if ! ${MARIADB_CLIENT} "${test_db_name}" <<< "SELECT * FROM test WHERE id=2;" >/
     estat=3
 fi
 
-mariadbd_server_stop
+mariadb_server_stop
 
 end_test
