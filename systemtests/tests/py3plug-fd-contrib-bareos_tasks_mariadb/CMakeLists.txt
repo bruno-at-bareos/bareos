@@ -28,7 +28,9 @@ if(TARGET python3-fd
    AND MARIADB_DAEMON_BINARY
    AND MARIADB_CLIENT_BINARY
 )
-  create_systemtest(${SYSTEMTEST_PREFIX} py3plug-fd-contrib-bareos_tasks_mariadb)
+  create_systemtest(
+    ${SYSTEMTEST_PREFIX} py3plug-fd-contrib-bareos_tasks_mariadb
+  )
 else()
   create_systemtest(
     ${SYSTEMTEST_PREFIX}
