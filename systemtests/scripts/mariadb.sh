@@ -20,7 +20,7 @@
 #   02110-1301, USA.
 
 #
-# A set of useful functions to be sourced to run mysql/mariadb.
+# A set of useful functions to be sourced to run mariadb.
 #
 # Requirements:
 #   Environment variables:
