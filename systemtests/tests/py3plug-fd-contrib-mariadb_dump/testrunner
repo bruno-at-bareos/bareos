@@ -25,14 +25,14 @@ skip_if_root
 "${rscripts}"/cleanup
 "${rscripts}"/setup
 
-start_test
-
 mariadb_init
 mariadb_server_start
 
 echo "create database ${test_db_name}" | ${MARIADB_CLIENT}
 echo "CREATE TABLE test ( id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, data VARCHAR(100), created TIMESTAMP DEFAULT NOW())  " | ${MARIADB_CLIENT} "${test_db_name}"
 echo "insert into test (data) VALUES ('test entry 1') " | ${MARIADB_CLIENT} "${test_db_name}"
+
+start_test
 
 cat <<END_OF_DATA >"$tmp/bconcmds"
 @$out $tmp/log1.out
