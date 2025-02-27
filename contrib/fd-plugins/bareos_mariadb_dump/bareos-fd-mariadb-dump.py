@@ -24,10 +24,10 @@
 """
 bareos-fd-mariadb-dump is a plugin to dump mariadb database via mariadb-dump
 """
-
 import os
 from subprocess import *
-
+from sys import version_info
+from sys import version
 # Provided by the Bareos FD Python plugin interface
 import bareosfd
 from bareosfd import *
@@ -37,12 +37,23 @@ from BareosFdWrapper import *  # noqa
 
 
 @BareosPlugin
-class BareosFdPluginMariaDBDump(BareosFdPluginBaseclass):  # noqa
+class BareosFdPluginMariaDBDump(BareosFdPluginBaseclass.BareosFdPluginBaseclass):  # noqa
     """
     Bareos-FD-Plugin-Class for backing up all mariadb databases found in a specific mariadb server
+    with native mariadb-dump binary
     """
     def __init__(self, plugindef):
         BareosFdPluginBaseclass.__init__(self, plugindef)
+        bareosfd.DebugMessage(
+            100, f"Constructor called in module {__name__} with plugindef={plugindef}\n"
+        )
+        bareosfd.DebugMessage(
+            100,
+            (
+                f"Python Version: {version_info.major}.{version_info.minor}"
+                f".{version_info.micro}\n"
+            ),
+        )
         self.file = None
         # mariadb host and credentials, by default we use localhost and root and
         # prefer to have a default my.cnf with mariadb credentials
