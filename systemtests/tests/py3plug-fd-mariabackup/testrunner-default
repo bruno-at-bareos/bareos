@@ -24,16 +24,16 @@ mariabackup_test_db="${db_name}_mariabackup"
 #shellcheck source=../scripts/mariadb.sh
 . "${rscripts}"/mariadb.sh
 
-start_test
-
-# TODO test job failed when Accurate is On
-
 mariadb_init
 mariadb_server_start
 
 echo "create database ${mariabackup_test_db}" | ${MARIADB_CLIENT}
 echo "CREATE TABLE test ( id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, data VARCHAR(100), created TIMESTAMP DEFAULT NOW())  " | ${MARIADB_CLIENT} "${mariabackup_test_db}"
 echo "insert into test (data) VALUES ('test entry 1') " | ${MARIADB_CLIENT} "${mariabackup_test_db}"
+
+# TODO test job failed when Accurate is On
+
+start_test
 
 cat <<END_OF_DATA1 >"${tmp}/bconcmds"
 @$out ${tmp}/log1.out
