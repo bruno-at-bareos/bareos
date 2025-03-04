@@ -116,6 +116,6 @@ mariadb_server_stop()
     local PID=$(get_mariadb_server_pid)
     if [ "$PID" ]; then
         kill $PID
-        waitpid $PID
+        waitpid -ev $PID
     fi
 }
