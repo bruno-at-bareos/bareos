@@ -37,7 +37,7 @@ from BareosFdWrapper import *  # noqa
 
 
 @BareosPlugin
-class BareosFdPluginMariaDBDump(BareosFdPluginBaseclass.BareosFdPluginBaseclass):  # noqa
+class BareosFdPluginMariadbDump(BareosFdPluginBaseclass.BareosFdPluginBaseclass):  # noqa
     """
     Bareos-FD-Plugin-Class for backing up all mariadb databases found in a specific mariadb server
     with native mariadb-dump binary
