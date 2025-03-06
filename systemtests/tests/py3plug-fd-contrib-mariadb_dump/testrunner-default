@@ -29,6 +29,7 @@ mariadb_server_start
 echo "create database ${test_db_name}" | ${MARIADB_CLIENT}
 echo "CREATE TABLE test ( id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, data VARCHAR(100), created TIMESTAMP DEFAULT NOW())  " | ${MARIADB_CLIENT} "${test_db_name}"
 echo "insert into test (data) VALUES ('test entry 1') " | ${MARIADB_CLIENT} "${test_db_name}"
+echo "insert into test (data) VALUES ('test entry 2') " | ${MARIADB_CLIENT} "${test_db_name}"
 
 start_test
 
@@ -62,6 +63,8 @@ restore restorejob=RestoreFile client=bareos-fd fileset=bareos_mariadb_dump yes 
 wait
 setdebug level=0 client=bareos-fd
 status dir
+wait
+messages
 llist jobs job=RestoreFile
 END_OF_DATA2
 
@@ -79,6 +82,7 @@ check_for_zombie_jobs storage=File
 stop_bareos
 
 # delete database
+echo "drop databse ${test_db_name} to test reimport"
 ${MARIADB_CLIENT} <<< "DROP DATABASE ${test_db_name};"
 
 if ${MARIADB_CLIENT} "${test_db_name}" <<< "SELECT * FROM test WHERE id=2;" 2>/dev/null; then
@@ -87,12 +91,14 @@ if ${MARIADB_CLIENT} "${test_db_name}" <<< "SELECT * FROM test WHERE id=2;" 2>/d
 fi
 
 # restore db
+echo "restore databse with ${RESTORE_DIR}/${test_db_name}.sql "
 ${MARIADB_CLIENT} < "${RESTORE_DIR}/${test_db_name}.sql"
 
 if ! ${MARIADB_CLIENT} "${test_db_name}" <<< "SELECT * FROM test WHERE id=2;" >/dev/null; then
     echo "test entry not found after restore"
     estat=3
 fi
+echo "Restore tested ok"
 
 mariadb_server_stop
 
