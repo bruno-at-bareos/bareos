@@ -22,8 +22,8 @@ skip_if_root
 
 #shellcheck source=../scripts/mysql.sh
 . "${rscripts}"/mariadb.sh
-"${rscripts}"/cleanup
-"${rscripts}"/setup
+# "${rscripts}"/cleanup
+# "${rscripts}"/setup
 
 mariadb_init
 mariadb_server_start
@@ -34,47 +34,71 @@ echo "insert into test (data) VALUES ('test entry 1') " | ${MARIADB_CLIENT} "${t
 
 start_test
 
-cat <<END_OF_DATA >"$tmp/bconcmds"
-@$out $tmp/log1.out
-run job=$JobName yes
+cat <<END_OF_DATA >${tmp}/bconcmds
+@$out ${NULL_DEV}
+messages
+@$out ${tmp}/log1.out
+setdebug level=500 trace=1 timestamp=1 client=bareos-fd
+run job=${JobName} yes
 wait
-
-status dir
+setdebug level=0 client=bareos-fd
+status director
+status client
+status storage=File
+wait
+messages
 llist jobs job=$JobName
 END_OF_DATA
 
-run_bareos "$@"
-check_log ${tmp}/log1.out
+run_bconsole
+expect_grep "Backup OK" "${tmp}/log1.out" "Full Backup not found!"
 
 # insert data and run incremental
 echo "insert into test (data) VALUES ('test entry 2') " | ${MARIADB_CLIENT} "${test_db_name}"
 
-cat <<END_OF_DATA2 >"$tmp/bconcmds"
-@$out ${tmp}/log1i.out
-@# run incremental again without any new data
-run job=${JobName} yes
+cat <<END_OF_DATA2>${tmp}/bconcmds
+@$out ${NULL_DEV}
+messages
+@$out ${tmp}/log2.out
+setdebug level=500 trace=1 timestamp=1 client=bareos-fd
+run job=${JobName} Level=Incremental yes
 wait
-status dir
+setdebug level=0 client=bareos-fd
+messages
+llist jobs job=$JobName
 END_OF_DATA2
 
-run_bareos "$@"
-check_log ${tmp}/log1i.out
+run_bconsole
+expect_grep "Backup OK" "${tmp}/log2.out" "Incremental Backup not found!"
 
-cat <<END_OF_DATA3 >"${tmp}/bconcmds"
-@$out ${tmp}/log2.out
-restore restorejob=RestoreFile client=bareos-fd fileset=bareos_mariadb_dump yes select all done
+# run incremental again without any new data
+cat <<END_OF_DATA3 >"$tmp/bconcmds"
+@$out ${tmp}/log3.out
+setdebug level=500 trace=1 timestamp=1 client=bareos-fd
+run job=${JobName} yes
 wait
+setdebug level=0 client=bareos-fd
 status dir
-llist jobs job=RestoreFile
+llist jobs job=$JobName
 END_OF_DATA3
 
-run_bareos "$@"
-check_log ${tmp}/log2.out
+run_bconsole
+expect_grep "Backup OK" "${tmp}/log3.out" "Empty Incremental Backup not found!"
 
-check_for_zombie_jobs storage=File
-stop_bareos
 
-check_two_logs
+cat <<END_OF_DATA4 >"${tmp}/bconcmds"
+@$out ${tmp}/log4.out
+setdebug level=500 trace=1 timestamp=1 client=bareos-fd
+restore restorejob=RestoreFile client=bareos-fd fileset=bareos_mariadb_dump yes select all done
+wait
+setdebug level=0 client=bareos-fd
+status dir
+llist jobs job=RestoreFile
+END_OF_DATA4
+
+run_bconsole
+expect_grep "Restore OK" "${tmp}/log4.out" "Restore OK not found!"
+
 
 # Check if some files are restored
 ls -lR "${RESTORE_DIR}"
@@ -82,6 +106,9 @@ if [ -z "$(ls -A "${RESTORE_DIR}")" ]; then
        echo "No restore data found"
        estat=1
 fi
+
+check_for_zombie_jobs storage=File
+stop_bareos
 
 # delete database
 ${MARIADB_CLIENT} <<< "DROP DATABASE ${test_db_name};"
