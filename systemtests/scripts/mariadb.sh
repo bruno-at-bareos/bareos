@@ -63,7 +63,7 @@ mariadb_init()
         } > my.cnf
         MARIADB_CLIENT="${MARIADB_CLIENT_BINARY} --defaults-file=my.cnf"
     else
-        echo "MariaDBL init with ${MARIADB_INSTALL_DB_SCRIPT}"
+        echo "MariaDB init with ${MARIADB_INSTALL_DB_SCRIPT}"
         ${MARIADB_INSTALL_DB_SCRIPT} --auth-root-authentication-method=socket --user="${USER}" --auth-root-socket-user="${USER}" --defaults-file=mariadbdefaults > mariadb/mariadb_init.log
         {
             echo "[client]"
