@@ -69,7 +69,9 @@ class BareosFdMariadb_dump(BareosFdPluginBaseclass):  # noqa
     def parse_plugin_definition(self, plugindef):
         """
         """
+        bareosfd.DebugMessage(100, "parse_plugin_definition started\n")
         BareosFdPluginBaseclass.parse_plugin_definition(self, plugindef)
+
         if "dumpbinary" in self.options:
             self.dumpbinary = self.options["dumpbinary"]
 
@@ -80,30 +82,31 @@ class BareosFdMariadb_dump(BareosFdPluginBaseclass):  # noqa
         if not "drop_and_recreate" in self.options or not self.options["drop_and_recreate"] == "false":
             self.dumpoptions += " --add-drop-database --databases "
 
-        #TODO clarify is defaultsfile or defaults-extra-file if defaultsfile is set
+        #TODO clarify if it is defaultsfile or defaults-extra-file if defaultsfile is set
         if "defaultsfile" in self.options:
             self.defaultsfile = self.options["defaultsfile"]
-            self.mariadbconnect += " --defaults-file=" + self.defaultsfile
+            self.mariadbconnect = f" --defaults-file={self.defaultsfile}"
 
         if "host" in self.options:
             self.host = self.options["host"]
-            self.mariadbconnect += " -h " + self.host
+            self.mariadbconnect += f" --host={self.host}"
 
         if "user" in self.options:
             self.user = self.options["user"]
-            self.mariadbconnect += " -u " + self.user
+            self.mariadbconnect += f" --user={self.user}"
 
         if "password" in self.options:
             self.password = self.options['password']
-            self.mariadbconnect += " --password=" + self.password
+            self.mariadbconnect += f" --password={self.password}"
 
+        bareosfd.DebugMessage(150, f"mariadbconnect={self.mariadbconnect}\n")
         # if plugin has db configured (a list of comma separated databases to backup
         # we use it here as list of databases to backup
         if "db" in self.options:
             self.databases = self.options['db'].split(',')
         # Otherwise we backup all existing databases
         else:
-            showDbCommand = "mariadb %s -B -N -e 'show databases'" % self.mariadbconnect
+            showDbCommand = f"mariadb {self.mariadbconnect} -B -N -e 'show databases'"
             showDb = Popen(showDbCommand, shell=True, stdout=PIPE, stderr=PIPE)
             databases = showDb.stdout.read()
             if isinstance(databases, bytes):
@@ -122,21 +125,18 @@ class BareosFdMariadb_dump(BareosFdPluginBaseclass):  # noqa
                 )
                 DebugMessage(
                     10,
-                    "Failed mysql command: '%s'"
-                    % showDbCommand
+                    f"Failed mariadb command: '{showDbCommand}'"
                 )
                 return bRC_Error
             if returnCode != 0:
                 (stdOut, stdError) = showDb.communicate()
                 JobMessage(
                     M_FATAL,
-                    "No databases specified and show databases failed. %s\n"
-                    % stdError
+                    f"No databases specified and show databases failed. {stdError}\n"
                 )
                 DebugMessage(
                     10,
-                    "Failed mysql command: '%s'"
-                    % showDbCommand
+                    f"Failed mariadb command: '{showDbCommand}'"
                 )
                 return bRC_Error
 
@@ -182,7 +182,7 @@ class BareosFdMariadb_dump(BareosFdPluginBaseclass):  # noqa
 
         db = self.databases.pop()
 
-        sizeDbCommand = "mariadb %s -B -N -e 'SELECT (SUM(DATA_LENGTH + INDEX_LENGTH)) FROM information_schema.TABLES WHERE TABLE_SCHEMA = \"%s\"'" % (self.mariadbconnect, db)
+        sizeDbCommand = f"mariadb {self.mariadbconnect} -B -N -e 'SELECT (SUM(DATA_LENGTH + INDEX_LENGTH)) FROM information_schema.TABLES WHERE TABLE_SCHEMA = \"{db}\"'"
         sizeDb = Popen(sizeDbCommand, shell=True, stdout=PIPE, stderr=PIPE)
         size_curr_db = sizeDb.stdout.read()
         sizeDb.wait()
@@ -193,16 +193,16 @@ class BareosFdMariadb_dump(BareosFdPluginBaseclass):  # noqa
         savepkt.fname = "@mariadbbackup@/{}.sql".format(db)
         savepkt.type = FT_REG
 
-        dumpcommand = ("%s %s %s %s" % (self.dumpbinary, self.mariadbconnect, db, self.dumpoptions))
+        dumpcommand = f"{self.dumpbinary} {self.mariadbconnect} {db} {self.dumpoptions}"
         DebugMessage(
             100,
-            "Dumper: '" + dumpcommand + "'\n"
+            f"Dumper: '{dumpcommand}'\n"
         )
         self.stream = Popen(dumpcommand, shell=True, stdout=PIPE, stderr=PIPE)
 
         JobMessage(
             M_INFO,
-            "Starting backup of " + savepkt.fname + "\n"
+            f"Starting backup of '{savepkt.fname}'\n"
         )
         return bRC_OK
 
@@ -214,7 +214,7 @@ class BareosFdMariadb_dump(BareosFdPluginBaseclass):  # noqa
         """
         DebugMessage(
             100,
-            "plugin_io called with " + str(IOP.func) + "\n"
+            f"plugin_io called with '{str(IOP.func)}'\n"
         )
 
         if IOP.func == IO_OPEN:
@@ -225,7 +225,7 @@ class BareosFdMariadb_dump(BareosFdPluginBaseclass):  # noqa
                 IOP.status = -1;
                 DebugMessage(
                     100,
-                    "Error opening file: " + IOP.fname + "\n"
+                    f"Error opening file: '{IOP.fname}'\n"
                 )
                 print(exception);
                 return bRC_Error
@@ -246,7 +246,7 @@ class BareosFdMariadb_dump(BareosFdPluginBaseclass):  # noqa
                 IOP.io_errno = -1
                 DebugMessage(
                     100,
-                    "Error writing data: " + str(msg) + "\n"
+                    f"Error writing data: '{str(msg)}'\n"
                 )
             return bRC_OK
 
@@ -261,7 +261,7 @@ class BareosFdMariadb_dump(BareosFdPluginBaseclass):  # noqa
         else:
             DebugMessage(
                 100,
-                "plugin_io called with unsupported IOP:" + str(IOP.func) + "\n"
+                f"plugin_io called with unsupported IOP: '{str(IOP.func)}'\n"
             )
             return bRC_OK
 
@@ -282,8 +282,7 @@ class BareosFdMariadb_dump(BareosFdPluginBaseclass):  # noqa
         else:
             DebugMessage(
                 100,
-                "end_backup_file() entry point in Python called. Returncode: %d\n"
-                % self.stream.returncode
+                f"end_backup_file() entry point in Python called. Returncode: {self.stream.returncode}\n"
             )
             if returnCode != 0:
                 (stdOut, stdError) = self.stream.communicate()
@@ -291,8 +290,7 @@ class BareosFdMariadb_dump(BareosFdPluginBaseclass):  # noqa
                     stdError = ''
                 JobMessage(
                     M_ERROR,
-                    "Dump command returned non-zero value: %d, message: %s\n"
-                    % (returnCode,stdError)
+                    f"Dump command returned non-zero value: {returnCode}, message: {stdError}\n"
                 )
 
         if self.databases:
