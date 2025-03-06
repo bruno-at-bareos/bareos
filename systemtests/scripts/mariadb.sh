@@ -114,8 +114,7 @@ mariadb_server_stop()
 {
     printf "shutdown Mariadbd server "
     local PID=$(get_mariadb_server_pid)
-    if [ "$PID" ]; then
-        kill $PID
-        waitpid -ev $PID
+    if [ "${PID}" ]; then
+        kill ${PID}
     fi
 }
