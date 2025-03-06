@@ -37,16 +37,16 @@ from BareosFdWrapper import *  # noqa
 
 
 @BareosPlugin
-class BareosFdPluginMariadbDump(BareosFdPluginBaseclass.BareosFdPluginBaseclass):  # noqa
+class BareosFdMariadb_dump(BareosFdPluginBaseclass):  # noqa
     """
-    Bareos-FD-Plugin-Class for backing up all mariadb databases found in a specific mariadb server
+    Plugin for backing up all mariadb databases found in a specific mariadb server
     with native mariadb-dump binary
     """
     def __init__(self, plugindef):
-        BareosFdPluginBaseclass.__init__(self, plugindef)
         bareosfd.DebugMessage(
             100, f"Constructor called in module {__name__} with plugindef={plugindef}\n"
         )
+        super(BareosFdMariadb_dump, self).__init__(plugindef)
         bareosfd.DebugMessage(
             100,
             (
@@ -83,7 +83,7 @@ class BareosFdPluginMariadbDump(BareosFdPluginBaseclass.BareosFdPluginBaseclass)
         #TODO clarify is defaultsfile or defaults-extra-file if defaultsfile is set
         if "defaultsfile" in self.options:
             self.defaultsfile = self.options["defaultsfile"]
-            self.mariaconnect += " --defaults-file=" + self.defaultsfile
+            self.mariadbconnect += " --defaults-file=" + self.defaultsfile
 
         if "host" in self.options:
             self.host = self.options["host"]
