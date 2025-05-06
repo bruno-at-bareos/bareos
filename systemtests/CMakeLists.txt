@@ -170,10 +170,15 @@ set(ALL_BINARIES_BEING_USED_BY_SYSTEMTESTS
     testfind
     bdedupestimate
     gentestdata
+    bareos-tray-monitor
 )
 
 if(TARGET bareos_vadp_dumper)
   list(APPEND ALL_BINARIES_BEING_USED_BY_SYSTEMTESTS bareos_vadp_dumper)
+endif()
+
+if(TARGET bareos-tray-monitor)
+  list(APPEND ALL_BINARIES_BEING_USED_BY_SYSTEMTESTS bareos-tray-monitor)
 endif()
 
 cmake_print_variables(RUN_SYSTEMTESTS_ON_INSTALLED_FILES)
