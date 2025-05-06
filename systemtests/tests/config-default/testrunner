@@ -1,0 +1,63 @@
+#!/bin/bash
+
+#   BAREOS® - Backup Archiving REcovery Open Sourced
+#
+#   Copyright (C) 2024-2024 Bareos GmbH & Co. KG
+#
+#   This program is Free Software; you can redistribute it and/or
+#   modify it under the terms of version three of the GNU Affero General Public
+#   License as published by the Free Software Foundation and included
+#   in the file LICENSE.
+#
+#   This program is distributed in the hope that it will be useful, but
+#   WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+#   Affero General Public License for more details.
+#
+#   You should have received a copy of the GNU Affero General Public License
+#   along with this program; if not, write to the Free Software
+#   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+#   02110-1301, USA.
+
+set -e
+set -o pipefail
+set -u
+
+#
+# run config test (-t) for each daemon with defaultconfig files
+#
+
+TestName="$(basename "$(pwd)")"
+export TestName
+
+#shellcheck source=../environment.in
+. ./environment
+
+#shellcheck source=../scripts/functions
+. "${rscripts}"/functions
+
+"${rscripts}"/cleanup
+"${rscripts}"/setup
+
+start_test
+
+BAREOS_CONFIG_DIR="$(pwd)/../../defaultconfigs"
+
+if ! "${BAREOS_DIRECTOR_BINARY}" --config "${BAREOS_CONFIG_DIR}" --test-config; then
+  set_error "bareos-dir defaultconfig failed"
+  exit 1
+fi
+if ! "${BAREOS_STORAGE_BINARY}" --config "${BAREOS_CONFIG_DIR}" --test-config; then
+  set_error "bareos-sd defaultconfig failed"
+  exit 2
+fi
+if ! "${BAREOS_FILEDAEMON_BINARY}" --config "${BAREOS_CONFIG_DIR}" --test-config; then
+  set_error "bareos-fd defaultconfig failed"
+  exit 3
+fi
+if ! "${BAREOS_BCONSOLE_BINARY}" --config "${BAREOS_CONFIG_DIR}" --test-config; then
+  set_error "bareos bconsole defaultconfig failed"
+  exit 4
+fi
+
+end_test
