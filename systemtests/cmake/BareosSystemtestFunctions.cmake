@@ -53,6 +53,9 @@ macro(create_systemtests_directory)
 
   configurefilestosystemtest("core/src" "defaultconfigs" "*.conf" @ONLY "")
   configurefilestosystemtest("core/src" "defaultconfigs" "*.in" @ONLY "")
+  configurefilestosystemtest(
+    "core/src/console" "defaultconfigs" "*.in" @ONLY ""
+  )
 
   configurefilestosystemtest("core" "scripts" "*.in" @ONLY "")
   configurefilestosystemtest("core" "scripts" "bareos-ctl-funcs" @ONLY "")
