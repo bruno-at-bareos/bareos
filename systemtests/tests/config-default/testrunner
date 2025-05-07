@@ -2,7 +2,7 @@
 
 #   BAREOS® - Backup Archiving REcovery Open Sourced
 #
-#   Copyright (C) 2024-2024 Bareos GmbH & Co. KG
+#   Copyright (C) 2024-2025 Bareos GmbH & Co. KG
 #
 #   This program is Free Software; you can redistribute it and/or
 #   modify it under the terms of version three of the GNU Affero General Public
@@ -41,18 +41,18 @@ export TestName
 
 start_test
 
-BAREOS_CONFIG_DIR="$(pwd)/../../defaultconfigs"
+BAREOS_CONFIG_DIR="$(pwd)/../../../core/src/defaultconfigs"
 
-if ! "${BAREOS_DIRECTOR_BINARY}" --config "${BAREOS_CONFIG_DIR}" --test-config; then
-  set_error "bareos-dir defaultconfig failed"
+if ! "${BAREOS_FILEDAEMON_BINARY}" --config "${BAREOS_CONFIG_DIR}" --test-config; then
+  set_error "bareos-fd defaultconfig failed"
   exit 1
 fi
-if ! "${BAREOS_STORAGE_BINARY}" --config "${BAREOS_CONFIG_DIR}" --test-config; then
+if ! "${BAREOS_STORAGEDAEMON_BINARY}" --config "${BAREOS_CONFIG_DIR}" --test-config; then
   set_error "bareos-sd defaultconfig failed"
   exit 2
 fi
-if ! "${BAREOS_FILEDAEMON_BINARY}" --config "${BAREOS_CONFIG_DIR}" --test-config; then
-  set_error "bareos-fd defaultconfig failed"
+if ! "${BAREOS_DIRECTOR_BINARY}" --config "${BAREOS_CONFIG_DIR}" --test-config; then
+  set_error "bareos-dir defaultconfig failed"
   exit 3
 fi
 if ! "${BAREOS_BCONSOLE_BINARY}" --config "${BAREOS_CONFIG_DIR}" --test-config; then
