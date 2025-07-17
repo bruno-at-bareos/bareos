@@ -119,7 +119,7 @@ SELECT
 FROM
   file JOIN path USING (pathid), decode_lstat(lstat)
 WHERE
-  jobid in (${first_job},${second_job},${third_job};
+  jobid in (${first_job},${second_job},${third_job});
 END_OF_DATA
 
 run_bconsole
