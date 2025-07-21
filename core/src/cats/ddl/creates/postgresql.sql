@@ -488,43 +488,43 @@ CREATE VIEW latest_full_size_categorized AS
 SELECT
   c.name AS client,
   f.fileset AS fileset,
-  j.jobbytes / 1000000 AS total_mb,
+  j.jobbytes::bigint / 1000000 AS total_mb,
   CASE
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%mssqlvdi:%' THEN j.jobbytes / 1000000
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-mariabackup%' THEN j.jobbytes / 1000000
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-percona%' THEN j.jobbytes / 1000000
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-postgres%' THEN j.jobbytes / 1000000
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-ldap%' THEN j.jobbytes / 1000000
-    WHEN f.filesettext ILIKE '%{%{%File%=%' THEN NULL
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%mssqlvdi:%' THEN j.jobbytes::bigint / 1000000
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-mariabackup%' THEN j.jobbytes::bigint / 1000000
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-percona%' THEN j.jobbytes::bigint / 1000000
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-postgres%' THEN j.jobbytes::bigint / 1000000
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-ldap%' THEN j.jobbytes::bigint / 1000000
+    WHEN f.filesettext ILIKE '%{%{%File%=%' THEN NULL::bigint
   END AS db_mb,
   CASE
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-vmware%' THEN j.jobbytes / 1000000
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-ovirt%' THEN j.jobbytes / 1000000
-    WHEN f.filesettext ILIKE '%{%{%File%=%' THEN NULL
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-vmware%' THEN j.jobbytes::bigint / 1000000
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-ovirt%' THEN j.jobbytes::bigint / 1000000
+    WHEN f.filesettext ILIKE '%{%{%File%=%' THEN NULL::bigint
   END AS vm_mb,
   CASE
-    WHEN f.filesettext ILIKE '%{%{%meta%=' THEN j.jobbytes / 1000000
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-libcloud%' THEN j.jobbytes / 1000000
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-qumulo%' THEN j.jobbytes / 1000000
-    WHEN f.filesettext ILIKE '%{%{%File%=%' THEN NULL
+    WHEN f.filesettext ILIKE '%{%{%meta%=' THEN j.jobbytes::bigint / 1000000
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-libcloud%' THEN j.jobbytes::bigint / 1000000
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-qumulo%' THEN j.jobbytes::bigint / 1000000
+    WHEN f.filesettext ILIKE '%{%{%File%=%' THEN NULL::bigint
   END AS filer_mb,
   CASE
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%' THEN NULL
-    WHEN f.filesettext ILIKE '%{%{%File%=%' THEN j.jobbytes / 1000000
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%' THEN NULL::bigint
+    WHEN f.filesettext ILIKE '%{%{%File%=%' THEN j.jobbytes::bigint / 1000000
   END AS normal_mb,
   CASE
-    WHEN f.filesettext ILIKE '%{%{%meta%=' THEN NULL
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%mssqlvdi:%' THEN NULL
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-mariabackup%' THEN NULL
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-percona%' THEN NULL
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-postgres%' THEN NULL
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-ldap%' THEN NULL
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-vmware%' THEN NULL
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-ovirt%' THEN NULL
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-libcloud%' THEN NULL
-    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-qumulo%' THEN NULL
-    WHEN f.filesettext ILIKE '%{%{%File%=%' THEN NULL
-    ELSE j.jobbytes / 1000000
+    WHEN f.filesettext ILIKE '%{%{%meta%=' THEN NULL::bigint
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%mssqlvdi:%' THEN NULL::bigint
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-mariabackup%' THEN NULL::bigint
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-percona%' THEN NULL::bigint
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-postgres%' THEN NULL::bigint
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-ldap%' THEN NULL::bigint
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-vmware%' THEN NULL::bigint
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-ovirt%' THEN NULL::bigint
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-libcloud%' THEN NULL::bigint
+    WHEN f.filesettext ILIKE '%{%{%Plugin%=%python%:module_name=bareos-fd-qumulo%' THEN NULL::bigint
+    WHEN f.filesettext ILIKE '%{%{%File%=%' THEN NULL::bigint
+    ELSE j.jobbytes::bigint / 1000000
   END AS unknown_mb,
   CASE
     WHEN f.filesettext ILIKE '%{%{%meta%=' THEN NULL
@@ -566,12 +566,12 @@ CREATE VIEW backup_unit_overview AS
 SELECT
   client,
   '<all file-based>' AS fileset,
-  NULL AS db_units,
-  NULL AS vm_units,
-  CEIL(SUM(filer_mb) / 1000000) AS filer_units,
+  NULL::bigint AS db_units,
+  NULL::bigint AS vm_units,
+  CEIL(SUM(filer_mb) / 1000000)::bigint AS filer_units,
   CASE
-    WHEN SUM(normal_mb) <= 10000000 THEN 1
-    ELSE CEIL(SUM(normal_mb)/1000000) - 9
+    WHEN SUM(normal_mb) <= 10000000 THEN 1::bigint
+    ELSE CEIL(SUM(normal_mb)/1000000)::bigint - 9::bigint
   END AS normal_units
 FROM latest_full_size_categorized
 WHERE normal_mb IS NOT NULL
@@ -582,18 +582,19 @@ SELECT
   client,
   fileset,
   CASE
-    WHEN db_mb > 0 THEN 1
+    WHEN db_mb > 0 THEN 1::bigint
   END AS db_units,
   CASE
-    WHEN vm_mb > 10000000 THEN CEIL(vm_mb / 1000000) - 9
-    WHEN vm_mb > 0 THEN 1
+    WHEN vm_mb > 10000000 THEN CEIL(vm_mb / 1000000)::bigint - 9::bigint
+    WHEN vm_mb > 0 THEN 1::bigint
   END AS vm_units,
-  NULL AS filer_units,
-  NULL AS normal_units
+  NULL::bigint AS filer_units,
+  NULL::bigint AS normal_units
 FROM latest_full_size_categorized
 WHERE (db_mb IS NOT NULL AND db_mb > 0)
    OR (vm_mb IS NOT NULL AND vm_mb > 0)
 ;
+
 
 -- lstat_decode part
 -- This function emulate in plpgsql language the C++ code of FromBase64 function in core/src/lib/base64.cc
@@ -619,7 +620,7 @@ create or replace function bareos_frombase64(field text) returns bigint as $$
 end
 $$ language 'plpgsql' immutable;
 
--- This function emulate in pgpgsql language the C++ code of DecodeStat
+-- This function emulate in plpgsql language the C++ code of DecodeStat
 -- function in core/src/lib/attrib.cc.
 -- LinkFI is decode here as bigint which differs from the C code.
 -- By default we return all fields, limit parameter used in params
