@@ -37,6 +37,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
       system:checkpoints:checkpoints-regular-backup
       system:client-initiated
       system:commandline-options
+      system:config-default
       system:copy-migrate:05-migrate
       system:copy-remote-bscan
       system:encrypt-signature-no-tls
