@@ -73,6 +73,12 @@ start_test()
 start_test
 
 BAREOS_CONFIG_DIR="$(pwd)/etc/bareos"
+os_type=$(uname -s)
+if [ "$os_type" = "Darwin" ] || [ "$os_type" = "FreeBSD" ]; then
+  SED="sed -i ''"
+else
+  SED="sed --in-place"
+fi
 
 # Replace empty Password
 # find ../../defaultconfigs/ -iname "*.conf" -exec sed -i "s,Password.*=.*\"\",Password = \"systemtest\",g" {} \;
@@ -80,7 +86,7 @@ BAREOS_CONFIG_DIR="$(pwd)/etc/bareos"
 # bareos-fd
 echo -n "Testing bareos-fd  :"
 # fix working non existing default working dir
-sed -i "s,\(Name.*=.*-fd\).*$,\1\n  Working Directory = \"$(pwd)/working\"\n,g" "${BAREOS_CONFIG_DIR}/bareos-fd.d/client/myself.conf"
+${SED} "s,\(Name.*=.*-fd\).*$,\1\n  Working Directory = \"$(pwd)/working\"\n,g" "${BAREOS_CONFIG_DIR}/bareos-fd.d/client/myself.conf"
 if ! "${BAREOS_FILEDAEMON_BINARY}" --verbose --config "${BAREOS_CONFIG_DIR}" --test-config; then
   set_error "bareos-fd default configuration failed"
   exit 1
@@ -90,11 +96,11 @@ echo " OK"
 #bareos-sd
 echo -n "Testing bareos-sd  :"
 # fix working non existing default working dir
-sed -i "s,\(Name.*=.*-sd\).*$,\1\n  Working Directory = \"$(pwd)/working\"\n,g" ${BAREOS_CONFIG_DIR}/bareos-sd.d/storage/bareos-sd.conf
+${SED} "s,\(Name.*=.*-sd\).*$,\1\n  Working Directory = \"$(pwd)/working\"\n,g" "${BAREOS_CONFIG_DIR}/bareos-sd.d/storage/bareos-sd.conf"
 # adjust sd_backenddir
-sed -i "s,\(Name.*=.*-sd\).*$,\1\n  Backend Directory = \"${sd_backenddir}\"\n,g" ${BAREOS_CONFIG_DIR}/bareos-sd.d/storage/bareos-sd.conf
+${SED} "s,\(Name.*=.*-sd\).*$,\1\n  Backend Directory = \"${sd_backenddir}\"\n,g" "${BAREOS_CONFIG_DIR}/bareos-sd.d/storage/bareos-sd.conf"
 # adjust default device storage location
-sed -i "s,\(Archive.*Device.*=\)\(.*\)$,\1 \"storage/\"\n,g" ${BAREOS_CONFIG_DIR}/bareos-sd.d/device/FileStorage.conf
+${SED} "s,\(Archive.*Device.*=\)\(.*\)$,\1 \"storage/\"\n,g" "${BAREOS_CONFIG_DIR}/bareos-sd.d/device/FileStorage.conf"
 if ! "${BAREOS_STORAGEDAEMON_BINARY}" --verbose --config "${BAREOS_CONFIG_DIR}" --test-config; then
   set_error "bareos-sd default config failed"
   exit 2
@@ -104,7 +110,7 @@ echo " OK"
 #bareos-dir
 echo -n "Testing bareos-dir :"
 # fix working non existing default working dir
-sed -i "s,\(Name.*=.*-dir\).*$,\1\n  Working Directory = \"$(pwd)/working\"\n,g" "${BAREOS_CONFIG_DIR}/bareos-dir.d/director/bareos-dir.conf"
+${SED} "s,\(Name.*=.*-dir\).*$,\1\n  Working Directory = \"$(pwd)/working\"\n,g" "${BAREOS_CONFIG_DIR}/bareos-dir.d/director/bareos-dir.conf"
 if ! "${BAREOS_DIRECTOR_BINARY}" --verbose --config "${BAREOS_CONFIG_DIR}" --test-config; then
   set_error "bareos-dir defaultconfig failed"
   exit 3
