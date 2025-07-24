@@ -94,7 +94,7 @@ sed -i "s,\(Name.*=.*-sd\).*$,\1\n  Working Directory = \"$(pwd)/working\"\n,g" 
 # adjust sd_backenddir
 sed -i "s,\(Name.*=.*-sd\).*$,\1\n  Backend Directory = \"${sd_backenddir}\"\n,g" ${BAREOS_CONFIG_DIR}/bareos-sd.d/storage/bareos-sd.conf
 # adjust default device storage location
-sed -i "s,\(Archive.*Device.*=.*\)\(\".*\".*\)$,\1 = \"$(pwd)/storage/\"\n,g" ${BAREOS_CONFIG_DIR}/bareos-sd.d/device/FileStorage.conf
+sed -i "s,\(Archive.*Device.*=.*\)\(\".*\".*\)$,\1 = \"storage/\"\n,g" ${BAREOS_CONFIG_DIR}/bareos-sd.d/device/FileStorage.conf
 if ! "${BAREOS_STORAGEDAEMON_BINARY}" --verbose --config "${BAREOS_CONFIG_DIR}" --test-config; then
   set_error "bareos-sd default config failed"
   exit 2
