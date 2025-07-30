@@ -70,6 +70,7 @@ start_test()
 #  bin/bareos status || true
 }
 
+
 start_test
 
 BAREOS_CONFIG_DIR="$(pwd)/etc/bareos"
@@ -78,16 +79,19 @@ if [ "$os_type" = "Darwin" ] || [ "$os_type" = "FreeBSD" ]; then
   SED="sed -i ''"
 else
   SED="sed --in-place"
+  if [ "$os_type" = "Windows" ]; then
+    conf=$(cygpath -w "${BAREOS_CONFIG_DIR}")
+  fi
 fi
 
-# Replace empty Password
-# find ../../defaultconfigs/ -iname "*.conf" -exec sed -i "s,Password.*=.*\"\",Password = \"systemtest\",g" {} \;
+echo " ====== env ===== "
+env
 
 # bareos-fd
 echo -n "Testing bareos-fd    :"
 # fix working non existing default working dir
 ${SED} "s,\(Name.*=.*-fd\).*$,\1\n  Working Directory = \"$(pwd)/working\"\n,g" "${BAREOS_CONFIG_DIR}/bareos-fd.d/client/myself.conf"
-if ! "${BAREOS_FILEDAEMON_BINARY}" --verbose --config "${BAREOS_CONFIG_DIR}" --test-config; then
+if ! "${BAREOS_FILEDAEMON_BINARY}" --verbose --config "${conf}" --test-config; then
   set_error "bareos-fd default configuration failed"
   exit 1
 fi
@@ -101,7 +105,7 @@ ${SED} "s,\(Name.*=.*-sd\).*$,\1\n  Working Directory = \"$(pwd)/working\"\n,g" 
 ${SED} "s,\(Name.*=.*-sd\).*$,\1\n  Backend Directory = \"${sd_backenddir}\"\n,g" "${BAREOS_CONFIG_DIR}/bareos-sd.d/storage/bareos-sd.conf"
 # adjust default device storage location
 ${SED} "s,\(Archive.*Device.*=\)\(.*\)$,\1 \"storage/\"\n,g" "${BAREOS_CONFIG_DIR}/bareos-sd.d/device/FileStorage.conf"
-if ! "${BAREOS_STORAGEDAEMON_BINARY}" --verbose --config "${BAREOS_CONFIG_DIR}" --test-config; then
+if ! "${BAREOS_STORAGEDAEMON_BINARY}" --verbose --config "${conf}" --test-config; then
   set_error "bareos-sd default config failed"
   exit 2
 fi
@@ -111,7 +115,7 @@ echo " OK"
 echo -n "Testing bareos-dir   :"
 # fix working non existing default working dir
 ${SED} "s,\(Name.*=.*-dir\).*$,\1\n  Working Directory = \"$(pwd)/working\"\n,g" "${BAREOS_CONFIG_DIR}/bareos-dir.d/director/bareos-dir.conf"
-if ! "${BAREOS_DIRECTOR_BINARY}" --verbose --config "${BAREOS_CONFIG_DIR}" --test-config; then
+if ! "${BAREOS_DIRECTOR_BINARY}" --verbose --config "${conf}" --test-config; then
   set_error "bareos-dir defaultconfig failed"
   exit 3
 fi
@@ -119,16 +123,16 @@ echo " OK"
 
 #bconsole
 echo -n "Testing bconsole     :"
-if ! "${BAREOS_BCONSOLE_BINARY}" --config "${BAREOS_CONFIG_DIR}" --test-config; then
+if ! "${BAREOS_BCONSOLE_BINARY}" --config "${conf}" --test-config; then
   set_error "bareos bconsole defaultconfig failed"
   exit 4
 fi
 echo " OK"
 
 # tray-monitor
-if [ ! -z "${BAREOS_TRAY_MONITOR_BINARY=-}" ] && [ "$BAREOS_TRAY_MONITOR_BINARY" != './/' ]; then
+if [ -n "${BAREOS_TRAY_MONITOR_BINARY=-}" ] && [ "$BAREOS_TRAY_MONITOR_BINARY" != './/' ]; then
   echo -n "Testing tray-monitor :"
-  if ! QT_QPA_PLATFORM=offscreen "${BAREOS_TRAY_MONITOR_BINARY}" --config "${BAREOS_CONFIG_DIR}" --test-config; then
+  if ! QT_QPA_PLATFORM=offscreen "${BAREOS_TRAY_MONITOR_BINARY}" --config "${conf}" --test-config; then
     set_error "bareos bconsole defaultconfig failed"
     exit 5
   fi
