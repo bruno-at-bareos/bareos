@@ -84,10 +84,14 @@ ${SSH} "cat - > /ifs/home/regress/${NDMP_FILESYSTEM}/testfile" < sbin/bareos_dir
 # data stream
 ${SSH} "cat - > /ifs/home/regress/${NDMP_FILESYSTEM}/testfile2" < sbin/bareos_sd-ndmp-bareos
 
-echo "################ running NDMP backup full #####################"
+echo "################ running NDMP failing backup full #####################"
 
 echo "run job=${NDMPCLIENT}dump level=Full yes" | ${BCONSOLE}
 check_jobid $((STARTJOBID))
+
+
+echo "################ rerun of NDMP backup full #####################"
+check_jobid $((STARTJOBID+1))
 
 
 echo "################ running NDMP backup incrementals #####################"
