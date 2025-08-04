@@ -1,0 +1,2 @@
+# on omnios you don't have /ifs present
+mountpoint=/export/
