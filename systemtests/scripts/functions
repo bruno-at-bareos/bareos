@@ -1332,3 +1332,8 @@ sd_pid=0
 dir_pid=0
 
 trap "{ estat=999; end_test; }" TERM INT
+
+# load local functions if they exists
+if [ -f functions.local ]; then
+  source functions.local
+fi
