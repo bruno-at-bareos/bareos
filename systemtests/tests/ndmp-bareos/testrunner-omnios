@@ -221,7 +221,7 @@ ${BCONSOLE} <<< "setdebug level=250 trace=1 timestamp=1 all"
 
 echo "################ run copy job #####################"
 # run copy job
-${BCONSOLE} <<< "run job=ndmp-copy client=ndmp-fd fileset=${NDMP_CLIENT}-fileset yes
+${BCONSOLE} <<< "run job=ndmp-copy fileset=${NDMP_CLIENT}-fileset yes
 wait
 messages
 "
@@ -240,8 +240,7 @@ messages
 ((ID++))
 check_jobid $((ID))
 
-${SSH} "tail -c 200 ${mountpoint}/home/regress/${NDMP_FILESYSTEM}/full | grep ${NDMP_FILESYSTEM}"
-#${SSH} "grep ${NDMP_FILESYSTEM} /${mount_point}/home/regress/${NDMP_FILESYSTEM}/full"
+${SSH} "printf \"%s\" \$(tail -c 200 \"${mountpoint}/home/regress/${NDMP_FILESYSTEM}/full\" | head -n 1) | grep \"${NDMP_FILESYSTEM}\""
 
 cleanup_remote
 
@@ -255,11 +254,12 @@ messages
 ((ID++))
 check_jobid $((ID))
 
-${SSH} "tail -c 200 ${mountpoint}/home/regress/${NDMP_FILESYSTEM}/incremental | grep \"${NDMP_FILESYSTEM}-1\""
+${SSH} "printf \"%s\" \$(tail -c 200 \"${mountpoint}/home/regress/${NDMP_FILESYSTEM}/incremental\" | head -n 1) | grep \"${NDMP_FILESYSTEM}-1\""
 
 # final cleanup
 cleanup_remote
 
-check_for_zombie_jobs storage=ndmpfile client=ndmp-fd
+# Zombie job is not able to handle ndmp enable client.
+# check_for_zombie_jobs storage=ndmpfile client=ndmp-fd
 
 end_test
