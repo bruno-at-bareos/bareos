@@ -217,6 +217,7 @@ ${SSH} "printf \"%s\" \$(tail -c 200 \"${mountpoint}/home/regress/${NDMP_FILESYS
 # cleanup
 cleanup_remote
 
+${BCONSOLE} <<< "setdebug level=250 trace=1 timestamp=1 all"
 
 echo "################ run copy job #####################"
 # run copy job
