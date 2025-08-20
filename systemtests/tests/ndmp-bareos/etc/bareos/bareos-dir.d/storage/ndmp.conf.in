@@ -11,7 +11,7 @@ Storage {
   Username = "@ndmp_data_agent_user@"       # username of the NDMP user on the TAPE AGENT e.g. the Bareos SD but accessed via the NDMP protocol.
   Password = "@ndmp_data_agent_password@"   # password of the NDMP user on the TAPE AGENT e.g. the Bareos SD but accessed via the NDMP protocol.
   Device = FileStorage
-  Media Type = file
+  Media Type = File
   PairedStorage = LocalfileStorage
 }
 
@@ -34,8 +34,8 @@ Storage {
   Auth Type = Clear                         # Clear == Clear Text, MD5 == Challenge protocol
   Username = "@ndmp_data_agent_user@"       # username of the NDMP user on the TAPE AGENT e.g. the Bareos SD but accessed via the NDMP protocol.
   Password = "@ndmp_data_agent_password@"   # password of the NDMP user on the TAPE AGENT e.g. the Bareos SD but accessed via the NDMP protocol.
-  Device = FileStorage
-  Media Type = file
+  Device = CopyStorage
+  Media Type = Copy
   PairedStorage = LocalCopyStorage
 }
 
@@ -45,6 +45,6 @@ Storage {
   Address = @IP_ADDRESS_TO_ACCESS_NDMP_DATA_AGENT@
   Password = @sd_password@
   Device = CopyStorage
-  Media Type = File
+  Media Type = Copy
   Port = @sd_port@
 }
