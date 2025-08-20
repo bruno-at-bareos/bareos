@@ -54,7 +54,7 @@ start_bareos
 
 BCONSOLE=bin/bconsole
 STARTJOBID=1
-NDMPCLIENT=omnios
+NDMP_CLIENT=omnios
 
 ${BCONSOLE} <<< "status client=ndmp-fd
 status director
@@ -63,9 +63,10 @@ status storage=ndmpfile
 
 cleanup_remote
 
+if [ -n "${DOFULLFAILED:-}" ]; then
 echo "################ running NDMP failing first full to trigger rerun #####################"
 
-${BCONSOLE} <<< "run job=NDMPBackupDump fileset=${NDMPCLIENT}-fileset level=Full yes"
+${BCONSOLE} <<< "run job=NDMPBackupDump fileset=${NDMP_CLIENT}-fileset level=Full yes"
 check_jobid_failed $((STARTJOBID))
 
 # Create data so rescheduled job will work
@@ -113,6 +114,15 @@ echo "################ rerun manually NDMP backup full #####################"
 ### Fix the failing job
 $BCONSOLE <<< "rerun jobid=${STARTJOBID} yes"
 STARTJOBID=$((STARTJOBID+1))
+
+else
+
+echo "################ running NDMP first full #####################"
+make_data_remote
+${BCONSOLE} <<< "run job=NDMPBackupDump fileset=${NDMP_CLIENT}-fileset level=Full yes"
+
+fi # end of testing empty
+
 check_jobid $((STARTJOBID))
 
 # Jobid 2 might failed if restarted while the Storage is still waiting on previous FD
@@ -121,12 +131,15 @@ check_jobid $((STARTJOBID))
 
 
 echo "################ running NDMP backup incrementals #####################"
-${SSH} dd if=/dev/zero of=/${mountpoint}/home/regress/${NDMP_FILESYSTEM}/incremental bs=1M count=2
+${SSH} dd if=/dev/zero of="${mountpoint}/home/regress/${NDMP_FILESYSTEM}/incremental" bs=1M count=2
 
-for ID in $(seq 1 10); do
-  ${SSH} "echo ${NDMP_FILESYSTEM}-${ID} >> /${mountpoint}/home/regress/${NDMP_FILESYSTEM}/incremental"
-  ${BCONSOLE} <<< "run job=NDMPBackupDump fileset=${NDMPCLIENT}-fileset level=Incremental yes"
-  check_jobid $((STARTJOBID+${ID}))
+# Don't try to exceed 9 see
+# https://docs.bareos.org/BareosMainReference/TasksAndConcepts/NdmpBackupsWithBareos.html#ndmp-backup-level
+# Isilon can have now up to 32, but the Solaris/omnios NDMP still only accepts 9.
+for ID in $(seq 1 9); do
+  ${SSH} "echo \"${NDMP_FILESYSTEM}-${ID}\" >> \"${mountpoint}/home/regress/${NDMP_FILESYSTEM}/incremental\""
+  ${BCONSOLE} <<< "run job=NDMPBackupDump fileset=${NDMP_CLIENT}-fileset level=Incremental yes"
+  check_jobid $((STARTJOBID+ID))
 done
 
 # restore
@@ -137,14 +150,14 @@ cleanup_remote
 echo "################ restore single file #####################"
 # restore  single file
 ${BCONSOLE} <<< "restore jobid=$((STARTJOBID)) client=ndmp-fd fileset=${NDMP_CLIENT}-fileset restorejob=NDMPRestoreDump select yes
-mark /${mountpoint}/home/regress/${NDMP_FILESYSTEM}/testfile
+mark ${mountpoint}/home/regress/${NDMP_FILESYSTEM}/testfile
 done
 wait
 "
 ((ID++))
-check_jobid $((STARTJOBID+${ID}))
+check_jobid $((STARTJOBID+ID))
 
-${SSH} "cat /${mountpoint}/home/regress/${NDMP_FILESYSTEM}/testfile" | diff - sbin/bareos_dir-ndmp-bareos
+${SSH} "cat \"${mountpoint}/home/regress/${NDMP_FILESYSTEM}/testfile\"" | diff - sbin/bareos_dir-ndmp-bareos
 
 # remove files
 cleanup_remote
@@ -154,9 +167,11 @@ echo "################ restore full #####################"
 # restore full
 ${BCONSOLE} <<< "restore jobid=$((STARTJOBID)) client=ndmp-fd fileset=${NDMP_CLIENT}-fileset restorejob=NDMPRestoreDump all done yes"
 ((ID++))
-check_jobid $((STARTJOBID+${ID}))
+check_jobid $((STARTJOBID+ID))
 
-${SSH} "tail -c 200 /${mountpoint}/home/regress/${NDMP_FILESYSTEM}/full | grep ${NDMP_FILESYSTEM}"
+# printf is used to suppress error return due to null byte
+# bash: line 1: warning: command substitution: ignored null byte in input
+${SSH} "printf \"%s\" \$(tail -c 200 \"${mountpoint}/home/regress/${NDMP_FILESYSTEM}/full\") | grep ${NDMP_FILESYSTEM}"
 
 # remove files
 cleanup_remote
@@ -165,25 +180,21 @@ echo "################ restore full to different RELATIVE location /prefix #####
 # restore full to different RELATIVE location "/prefix"
 ${BCONSOLE} <<< "restore jobid=$((STARTJOBID)) client=ndmp-fd fileset=${NDMP_CLIENT}-fileset restorejob=NDMPRestoreDump where=/bareos-restores-${NDMP_FILESYSTEM} all done yes"
 ((ID++))
-check_jobid $((STARTJOBID+${ID}))
+check_jobid $((STARTJOBID+ID))
 
-# Shouldn't that failed ?
-${SSH} "tail -c 200 /${mountpoint}/home/regress/${NDMP_FILESYSTEM}/full | grep ${NDMP_FILESYSTEM}"
-# and this one working ?
-#${SSH} "tail -c 200 /${mountpoint}/home/regress/${NDMP_FILESYSTEM}/bareos-restores-${NDMP_FILESYSTEM}/full | grep ${NDMP_FILESYSTEM}"
+${SSH} "printf \"%s\" \$(tail -c 200 \"${mountpoint}/home/regress/${NDMP_FILESYSTEM}/bareos-restores-${NDMP_FILESYSTEM}/full\") | grep ${NDMP_FILESYSTEM}"
 
 # remove files
 cleanup_remote
 
 echo "################ restore full to different ABSOLUTE location ^/prefix #####################"
 # restore full to different ABSOLUTE location "^/prefix"
-${BCONSOLE} <<< "restore jobid=$((STARTJOBID)) client=ndmp-fd fileset=${NDMP_CLIENT}-fileset restorejob=NDMPRestoreDump where=^/${mountpoint}/data/bareos-restores-${NDMP_FILESYSTEM} all done yes"
+${BCONSOLE} <<< "restore jobid=$((STARTJOBID)) client=ndmp-fd fileset=${NDMP_CLIENT}-fileset restorejob=NDMPRestoreDump where=^${mountpoint}/data/bareos-restores-${NDMP_FILESYSTEM} all done yes"
 ((ID++))
-check_jobid $((STARTJOBID+${ID}))
+check_jobid $((STARTJOBID+ID))
 
-${SSH} "tail -c 200 /${mountpoint}/home/regress/${NDMP_FILESYSTEM}/full | grep ${NDMP_FILESYSTEM}"
+${SSH} "printf \"%s\" \$(tail -c 200 \"${mountpoint}/data/bareos-restores-${NDMP_FILESYSTEM}/full\") | grep ${NDMP_FILESYSTEM}"
 
-#${SSH} "tail -c 200 /${mountpoint}/data/bareos-restores-${NDMP_FILESYSTEM}/full | grep ${NDMP_FILESYSTEM}"
 
 # remove files
 cleanup_remote
@@ -191,46 +202,59 @@ cleanup_remote
 echo "################ restore incremental #####################"
 # restore incremental
 ${BCONSOLE} <<< "restore jobid=$((STARTJOBID+1)) client=ndmp-fd fileset=${NDMP_CLIENT}-fileset restorejob=NDMPRestoreDump select current
-mark /${mountpoint}/home/regress/${NDMP_FILESYSTEM}/incremental
+mark ${mountpoint}/home/regress/${NDMP_FILESYSTEM}/incremental
 done
 yes
 "
 ((ID++))
-check_jobid $((STARTJOBID+${ID}))
+check_jobid $((STARTJOBID+ID))
 
-${SSH} "tail -c 200 /${mount_point}/home/regress/${NDMP_FILESYSTEM}/incremental | grep ${NDMP_FILESYSTEM}-1"
+# shouldn't we deterministically use one jobid and look that we found the corresponding incremental
+# here the restore use the last incremental
+${SSH} "printf \"%s\" \$(tail -c 200 \"${mountpoint}/home/regress/${NDMP_FILESYSTEM}/incremental\" | head -n 1) | grep \"${NDMP_FILESYSTEM}-1\""
+
 
 # cleanup
 cleanup_remote
 
-exit 0
 
 echo "################ run copy job #####################"
 # run copy job
-${BCONSOLE} <<< "run job=ndmp-copy-$NDMPCLIENT yes
+${BCONSOLE} <<< "run job=ndmp-copy client=ndmp-fd fileset=${NDMP_CLIENT}-fileset yes
 wait
 messages
 "
-echo "################ restore copy of full job #####################"
+((ID++))
+check_jobid $((STARTJOBID+ID))
 
-# restore copy
+cleanup_remote
+
+echo "################ restore copy of full job #####################"
+# restore copy force correct fileset to be used and not the one in jobdefs.
 ID=18
-${BCONSOLE} <<< restore jobid=$((STARTJOBID+${ID})) client=ndmp-fd fileset=${NDMP_CLIENT}-fileset restorejob=NDMPRestoreDump all done yes
+${BCONSOLE} <<< "restore jobid=$((ID)) client=ndmp-fd fileset=${NDMP_CLIENT}-fileset restorejob=NDMPRestoreDump all done yes
 wait
 messages
-${SSH} "tail -c 200 /${mount_point}/home/regress/${NDMP_FILESYSTEM}/full | grep ${NDMP_FILESYSTEM}"
+"
+((ID++))
+check_jobid $((ID))
+
+${SSH} "tail -c 200 ${mountpoint}/home/regress/${NDMP_FILESYSTEM}/full | grep ${NDMP_FILESYSTEM}"
 #${SSH} "grep ${NDMP_FILESYSTEM} /${mount_point}/home/regress/${NDMP_FILESYSTEM}/full"
 
 cleanup_remote
 
-ID=28
+ID=20
 echo "################ restore copy of incremental job #####################"
 # restore copy of incremental
-${BCONSOLE} <<< "restore jobid=$((STARTJOBID+${ID})) client=ndmp-fd fileset=${NDMP_CLIENT}-fileset restorejob=NDMPRestoreDump all done yes
+${BCONSOLE} <<< "restore jobid=$((ID)) client=ndmp-fd fileset=${NDMP_CLIENT}-fileset restorejob=NDMPRestoreDump all done yes
 wait
 messages
 "
-${SSH} "tail -c 200 /${mount_point}/home/regress/${NDMP_FILESYSTEM}/incremental | grep ${NDMP_FILESYSTEM}"
+((ID++))
+check_jobid $((ID))
+
+${SSH} "tail -c 200 ${mountpoint}/home/regress/${NDMP_FILESYSTEM}/incremental | grep \"${NDMP_FILESYSTEM}-1\""
 
 # final cleanup
 cleanup_remote
