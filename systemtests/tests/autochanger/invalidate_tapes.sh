@@ -1,7 +1,7 @@
 #!/bin/bash
 #   BAREOS® - Backup Archiving REcovery Open Sourced
 #
-#   Copyright (C) 2021-2021 Bareos GmbH & Co. KG
+#   Copyright (C) 2021-2025 Bareos GmbH & Co. KG
 #
 #   This program is Free Software; you can redistribute it and/or
 #   modify it under the terms of version three of the GNU Affero General Public
@@ -25,7 +25,11 @@ set -u
 . ./test-config
 . ./redirect_output
 
-echo "=== $0 Running ==="
+
+TestName="$(basename "$(pwd)")"
+export TestName
+
+echo "=== ${TestName} Running ==="
 
 invalidate_slots_on_autochanger() {
   changer_device=$1
