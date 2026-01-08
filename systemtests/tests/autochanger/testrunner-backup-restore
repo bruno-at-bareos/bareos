@@ -111,14 +111,15 @@ fi
 # Write list of jobids for next use
 echo "${list_of_jobids}" > "${tmp}/list_of_jobids"
 
+# Use restore jobid with mark, more reliable than with select.
 rm -f "${runner_tmp}/bconsole_restore_jobs"
-poolnumber=$((NUMBER_OF_POOLS))
 for j in ${list_of_jobids}; do
-  pool="Full-$((poolnumber - 1))"
   cat << EOF >> "${runner_tmp}/bconsole_restore_jobs"
-restore jobid=${j} pool="${pool}" where=${tmp}/bareos_restores_${j} select all done yes
+@out ${runner_tmp}/bconsole_restore_jobs.out
+restore jobid=${j} where=${tmp}/bareos_restores_${j} yes
+mark *
+done
 EOF
-  poolnumber=$((poolnumber - 1))
 done
 
 echo "wait" >> "${runner_tmp}/bconsole_restore_jobs"
