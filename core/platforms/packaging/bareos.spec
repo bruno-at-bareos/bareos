@@ -40,7 +40,6 @@ Vendor:     The Bareos Team
 %define build_qt_monitor 1
 %define glusterfs 0
 %define droplet 1
-%define have_git 1
 %define python_plugins 1
 %define contrib 1
 %define webui 1
@@ -58,10 +57,6 @@ BuildRequires: libtirpc-devel
 BuildRequires: fmt-devel
 %endif
 
-#
-# SUSE (openSUSE, SLES) specific settings
-#
-
 
 #
 # RedHat (CentOS, Fedora, RHEL) specific settings
@@ -75,10 +70,6 @@ BuildRequires: fmt-devel
 %define glusterfs 1
 %endif
 
-%if 0%{?rhel} == 7
-%define webui 0
-%define __python python3
-%endif
 
 # use modernized GCC 14 toolchain for C++20 support
 %if 0%{?rhel} && 0%{?rhel} <= 9
@@ -87,14 +78,6 @@ BuildRequires: gcc-toolset-14-annobin-plugin-gcc
 BuildRequires: gcc-toolset-14-gcc-c++
 %endif
 
-# rhel <=8 does not have grpc
-%if %{defined rhel} && (0%{?rhel} <= 8)
-%define enable_grpc 0
-%endif
-# fedora <=39 does not have grpc
-%if %{defined fedora} && (0%{?fedora} <= 39)
-%define enable_grpc 0
-%endif
 
 %if 0%{?suse_version}
 BuildRequires: gcc13
@@ -108,15 +91,13 @@ BuildRequires: systemd
 BuildRequires: systemd-rpm-macros
 %endif
 %{?systemd_requires}
-%endif
+
 
 %if 0%{?glusterfs}
 BuildRequires: glusterfs-devel glusterfs-api-devel
 %endif
 
-%if 0%{?have_git}
-BuildRequires: git-core
-%endif
+
 
 Source0: %{name}-%{version}.tar.gz
 
@@ -124,6 +105,7 @@ BuildRequires: cmake >= 3.17
 BuildRequires: gcc
 BuildRequires: gcc-c++
 BuildRequires: make
+BuildRequires: git-core
 BuildRequires: glibc
 BuildRequires: glibc-devel
 BuildRequires: ncurses-devel
@@ -160,25 +142,24 @@ BuildRequires: qt-devel
 BuildRequires: python3-devel >= 3.4
 %endif
 
+BuildRequires: pkgconfig(jansson)
+BuildRequires: pkgconfig(libxml-2.0)
+BuildRequires: pkgconfig(json-c)
+
+
 %if 0%{?suse_version}
 
 # suse_version:
+#   1600: SLE_16
 #   1500: SLE_15
-#   1315: SLE_12
-#   1110: SLE_11
 
 BuildRequires: distribution-release
 BuildRequires: shadow
 BuildRequires: update-desktop-files
-BuildRequires: pkgconfig(libxml-2.0)
-BuildRequires: pkgconfig(json-c)
 
-%if 0%{?suse_version} > 1010
 # link identical files
 BuildRequires: fdupes
-BuildRequires: libjansson-devel
 BuildRequires: lsb-release
-%endif
 
 %else
 # non suse
@@ -197,11 +178,8 @@ BuildRequires: redhat-lsb
 BuildRequires: fedora-release
 %endif
 
-BuildRequires: jansson-devel
-
 %else
 # non suse, non redhat: eg. mandriva.
-
 BuildRequires: lsb-release
 
 %endif
