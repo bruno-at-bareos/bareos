@@ -1,7 +1,7 @@
 #
 # spec file for package bareos
 # Copyright (c) 2011-2012 Bruno Friedmann (Ioda-Net) and Philipp Storz (dass IT)
-#               2013-2025 Bareos GmbH & Co KG
+#               2013-2026 Bareos GmbH & Co KG
 #
 
 Name:       bareos
@@ -41,7 +41,6 @@ Vendor:     The Bareos Team
 %define glusterfs 0
 %define droplet 1
 %define have_git 1
-%define install_suse_fw 0
 %define systemd_support 0
 %define python_plugins 1
 %define contrib 1
@@ -63,16 +62,7 @@ BuildRequires: fmt-devel
 #
 # SUSE (openSUSE, SLES) specific settings
 #
-%if 0%{?sles_version} == 10
-%define build_qt_monitor 0
-%define have_git 0
-%define python_plugins 0
-%endif
 
-%if 0%{?suse_version} > 1010 && 0%{?suse_version} < 1500
-%define install_suse_fw 1
-%define _fwdefdir   %{_sysconfdir}/sysconfig/SuSEfirewall2.d/services
-%endif
 
 
 %if 0%{?suse_version} > 1140
@@ -998,11 +988,6 @@ for F in  \
     %{script_dir}/mtx-changer \
     %{_sysconfdir}/%{name}/mtx-changer.conf \
 %endif
-%if 0%{?install_suse_fw} == 0
-    %{_sysconfdir}/sysconfig/SuSEfirewall2.d/services/bareos-dir \
-    %{_sysconfdir}/sysconfig/SuSEfirewall2.d/services/bareos-sd \
-    %{_sysconfdir}/sysconfig/SuSEfirewall2.d/services/bareos-fd \
-%endif
 %if 0%{?systemd_support}
     %{_sysconfdir}/rc.d/init.d/bareos-dir \
     %{_sysconfdir}/rc.d/init.d/bareos-sd \
@@ -1137,10 +1122,6 @@ mkdir -p %{?buildroot}/%{_libdir}/bareos/plugins/vmware_plugin
 %{_sysconfdir}/init.d/bareos-dir
 %endif
 %{_sbindir}/rcbareos-dir
-%if 0%{?install_suse_fw}
-# use noreplace if user has adjusted its list of IP
-%attr(0644, root, root) %config(noreplace) %{_fwdefdir}/bareos-dir
-%endif
 %else
 %if !0%{?systemd_support}
 %{_sysconfdir}/rc.d/init.d/bareos-dir
@@ -1203,10 +1184,6 @@ mkdir -p %{?buildroot}/%{_libdir}/bareos/plugins/vmware_plugin
 %{_sysconfdir}/init.d/bareos-sd
 %endif
 %{_sbindir}/rcbareos-sd
-%if 0%{?install_suse_fw}
-# use noreplace if user has adjusted its list of IP
-%attr(0644, root, root) %config(noreplace) %{_fwdefdir}/bareos-sd
-%endif
 %else
 %if !0%{?systemd_support}
 %{_sysconfdir}/rc.d/init.d/bareos-sd
@@ -1303,10 +1280,6 @@ mkdir -p %{?buildroot}/%{_libdir}/bareos/plugins/vmware_plugin
 %{_sysconfdir}/init.d/bareos-fd
 %endif
 %{_sbindir}/rcbareos-fd
-%if 0%{?install_suse_fw}
-# use noreplace if user has adjusted its list of IP
-%attr(0644, root, root) %config(noreplace) %{_fwdefdir}/bareos-fd
-%endif
 %else
 %if !0%{?systemd_support}
 %{_sysconfdir}/rc.d/init.d/bareos-fd
