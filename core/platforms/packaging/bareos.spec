@@ -841,7 +841,7 @@ source /opt/rh/gcc-toolset-14/enable
 %endif
 
 # use modern compiler on suse
-%if 0%{?suse_version}
+%if 0%{?suse_version} < 16
 CC=gcc-13  ; export CC
 CXX=g++-13 ; export CXX
 %endif
