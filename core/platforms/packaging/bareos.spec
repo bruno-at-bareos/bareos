@@ -217,9 +217,9 @@ Bareos source code has been released under the AGPL version 3 license.
 %{dscr}
 
 
-%if 0%{?suse_version}
-%debug_package
-%endif
+#%%if 0%%{?suse_version}
+#%%debug_package
+#%%endif
 
 # Notice : Don't try to change the order of package declaration
 # You will have side effect with PreReq
