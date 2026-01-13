@@ -62,30 +62,21 @@ BuildRequires: fmt-devel
 # RedHat (CentOS, Fedora, RHEL) specific settings
 #
 
-%if 0%{?fedora} >= 20
-%define glusterfs 1
-%endif
-
-%if 0%{?rhel} >= 7 && (0%{?rhel} <= 9)
-%define glusterfs 1
-%endif
-
-
 # use modernized GCC 14 toolchain for C++20 support
 %if 0%{?rhel} && 0%{?rhel} <= 9
 BuildRequires: gcc-toolset-14-gcc
 BuildRequires: gcc-toolset-14-annobin-plugin-gcc
 BuildRequires: gcc-toolset-14-gcc-c++
+%define glusterfs 1
+%define enable_grpc 0
 %endif
 
 
-%if 0%{?suse_version}
-%define enable_grpc 1
-%if 0%{?suse_version} < 1600
-BuildRequires: gcc13
-BuildRequires: gcc13-c++
+%if 0%{?suse_version} && 0%{?suse_version} <= 1599
+BuildRequires: gcc15
+BuildRequires: gcc15-c++
 %endif
-%endif
+
 
 BuildRequires: systemd
 # see https://en.opensuse.org/openSUSE:Systemd_packaging_guidelines
@@ -127,12 +118,16 @@ BuildRequires: libcap-devel
 BuildRequires: mtx
 
 %if 0%{?build_qt_monitor}
-%if 0%{?suse_version} < 16
-BuildRequires: libqt5-qtbase-devel
-%endif
+
+%if 0%{?suse_version}
+
 %if 0%{?suse_version} > 16
 BuildRequires: qt6-base-devel
+%else
+BuildRequires: libqt5-qtbase-devel
 %endif
+
+
 %else
 
 %if 0%{?rhel} > 7 || 0%{?fedora} >= 29
@@ -142,9 +137,10 @@ BuildRequires: qt-devel
 %endif
 
 %endif
+%endif
 
 %if 0%{?python_plugins}
-BuildRequires: python3-devel >= 3.4
+BuildRequires: python3-devel >= 3.6
 %endif
 
 BuildRequires: pkgconfig(jansson)
@@ -837,13 +833,13 @@ pushd %{CMAKE_BUILDDIR}
 
 # use modernized GCC 14 toolchain for C++20 support
 %if 0%{?rhel} && 0%{?rhel} <= 9
-source /opt/rh/gcc-toolset-14/enable
+source /opt/rh/gcc-toolset-15/enable
 %endif
 
-# use modern compiler on suse
-%if 0%{?suse_version} < 16
-CC=gcc-13  ; export CC
-CXX=g++-13 ; export CXX
+# use modern compiler on suse 15
+%if 0%{?suse_version} && 0%{?suse_version} <= 1599
+CC=gcc-15  ; export CC
+CXX=g++-15 ; export CXX
 %endif
 
 CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ;
