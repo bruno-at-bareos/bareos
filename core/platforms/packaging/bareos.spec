@@ -80,9 +80,11 @@ BuildRequires: gcc-toolset-14-gcc-c++
 
 
 %if 0%{?suse_version}
+%define enable_grpc 1
+%if 0%{?suse_version} < 1600
 BuildRequires: gcc13
 BuildRequires: gcc13-c++
-%define enable_grpc 1
+%endif
 %endif
 
 BuildRequires: systemd
