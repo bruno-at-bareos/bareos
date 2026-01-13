@@ -127,8 +127,12 @@ BuildRequires: libcap-devel
 BuildRequires: mtx
 
 %if 0%{?build_qt_monitor}
-%if 0%{?suse_version}
+%if 0%{?suse_version} < 16
 BuildRequires: libqt5-qtbase-devel
+%endif
+%if 0%{?suse_version} > 16
+BuildRequires: qt6-base-devel
+%endif
 %else
 
 %if 0%{?rhel} > 7 || 0%{?fedora} >= 29
@@ -137,7 +141,6 @@ BuildRequires: qt5-qtbase-devel
 BuildRequires: qt-devel
 %endif
 
-%endif
 %endif
 
 %if 0%{?python_plugins}
