@@ -63,6 +63,12 @@ OS:
       CUSTOM_TEST_IMAGES: [ SLE-15_SP3, SLE-15_SP6, openSUSE-Leap_15.6 ]
       ARCH:
       - x86_64
+    "16":
+      TYPE: rpm
+      IMAGE: sle160
+      CUSTOM_TEST_IMAGES: [ SLE-16, openSUSE-Leap_16.0 ]
+      ARCH:
+      - x86_64
   Fedora:
     "43":
       TYPE: rpm
