@@ -121,7 +121,7 @@ BuildRequires: mtx
 
 %if 0%{?suse_version}
 
-%if 0%{?suse_version} > 16
+%if 0%{?suse_version} > 1599
 BuildRequires: qt6-base-devel
 %else
 BuildRequires: libqt5-qtbase-devel
