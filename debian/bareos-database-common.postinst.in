@@ -52,6 +52,8 @@ if [ -r @scriptdir@/bareos-config-lib.sh ]; then
     dbc_pgsql_createdb_encoding="SQL_ASCII"
     dbc_pgsql_createdb_collate="C"
     dbc_pgsql_createdb_ctype="C"
+    # Don't let dbconfig doing a backup by itself
+    dbc_config_allow_backup="false"
 
     # While substitution on install is supported
     # by all recent versions of dbconfig
