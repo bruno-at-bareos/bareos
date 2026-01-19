@@ -15,6 +15,7 @@ if [ -r @scriptdir@/bareos-config-lib.sh ]; then
     dbc_dbname=@db_name@ || true
     dbc_dbuser=@db_user@ || true
     dbc_dbtypes="pgsql"
+    dbc_backup="false"
     dbc_config_allow_backup="false"
     # action
     if [ $# -gt 0 ]; then
