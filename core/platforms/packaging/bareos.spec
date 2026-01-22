@@ -195,6 +195,7 @@ BuildRequires: lsb-release
 
 %define replace_python_shebang sed -i '1s|^#!.*|#!%{__python3} %{py3_shbang_opts}|'
 
+
 Summary:    Backup Archiving REcovery Open Sourced - metapackage
 Requires:   %{name}-director = %{version}
 Requires:   %{name}-storage = %{version}
@@ -216,9 +217,10 @@ Bareos source code has been released under the AGPL version 3 license.
 %{dscr}
 
 
-#%%if 0%%{?suse_version}
-#%%debug_package
-#%%endif
+%if 0%{?suse_version} && 0%{?suse_version} < 1600
+%debug_package
+%endif
+
 
 # Notice : Don't try to change the order of package declaration
 # You will have side effect with PreReq
