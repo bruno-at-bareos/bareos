@@ -1,6 +1,6 @@
 #   BAREOS® - Backup Archiving REcovery Open Sourced
 #
-#   Copyright (C) 2019-2025 Bareos GmbH & Co. KG
+#   Copyright (C) 2019-2026 Bareos GmbH & Co. KG
 #
 #   This program is Free Software; you can redistribute it and/or
 #   modify it under the terms of version three of the GNU Affero General Public
@@ -204,8 +204,12 @@ endif()
 
 # if provided include NDMPConfig file. keep placed before systemtest
 if(ndmp_config)
-  message(INFO "\n\"ndmp_config:\" loaded ${ndmp_config}")
-  include("${ndmp_config}")
+  if(EXISTS "${ndmp_config}")
+    message(STATUS "\n\"ndmp_config:\" loaded ${ndmp_config}")
+    include("${ndmp_config}")
+  else()
+    message(FATAL_ERROR "ndmp_config file not found: ${ndmp_config}")
+  endif()
 endif()
 
 if(BUILD_BAREOS_BINARIES)
