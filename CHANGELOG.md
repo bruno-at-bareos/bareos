@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - matrix: add ubuntu 26.04 [PR #2635]
 - core: unify parsing of bools [PR #2578]
 - core: remove one "unused" layer of abstraction from our tls code [PR #2631]
+- bvfs: fix cache race [PR #2642]
 
 ### Removed
 - dird: deprecate Pool->FileRetention, Pool->JobRetention, WriteVerifyList [PR #2567]
@@ -2281,4 +2282,5 @@ If you want to migrate from your manually configured disk autochanger to simply 
 [PR #2631]: https://github.com/bareos/bareos/pull/2631
 [PR #2635]: https://github.com/bareos/bareos/pull/2635
 [PR #2638]: https://github.com/bareos/bareos/pull/2638
+[PR #2642]: https://github.com/bareos/bareos/pull/2642
 [unreleased]: https://github.com/bareos/bareos/tree/master
