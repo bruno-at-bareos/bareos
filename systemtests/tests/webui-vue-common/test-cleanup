@@ -29,6 +29,16 @@ export TestName
 . ./environment
 . "${BAREOS_SCRIPTS_DIR}/functions"
 
+playwright_artifacts="${tmp}/playwright-artifacts"
+collected_playwright_artifacts="${CMAKE_BINARY_DIR}/Testing/Temporary/playwright-artifacts/${TestName}"
+
+if [[ -d "${playwright_artifacts}" ]]; then
+  rm -rf "${collected_playwright_artifacts}"
+  mkdir -p "${collected_playwright_artifacts}"
+  cp -a "${playwright_artifacts}/." "${collected_playwright_artifacts}"
+  echo "Collected Playwright artifacts in ${collected_playwright_artifacts}"
+fi
+
 for pid_file in "${tmp}/webui-vue-frontend.pid" "${tmp}/webui-vue-proxy.pid"; do
   if [[ -f "${pid_file}" ]]; then
     pid="$(<"${pid_file}")"

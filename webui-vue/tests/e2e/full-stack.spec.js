@@ -95,7 +95,7 @@ async function login(
 
     const message = (await loginError.textContent())?.trim() || 'Unknown error'
     const transientConnectionError
-      = /connection error|websocket connection failed|could not connect to director/i.test(message)
+      = /connection error|connection to director .* failed|websocket connection failed|could not connect to director/i.test(message)
     if (!transientConnectionError || attempt === LOGIN_ATTEMPTS) {
       throw new Error(`Login failed: ${message}`)
     }
