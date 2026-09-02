@@ -352,7 +352,19 @@ class MediaVault():
             #        }
             #      }
             #    }
-            logger.error("%s\n",json_exp, exc_info=True)
+            logger.error("%s\n", json_exp, exc_info=True)
+            msg = ""
+            if json_exp["error"]["code"] == 1 and json_exp["error"]["message"] == "failed":
+                if isinstance(json_exp["error"]["data"]["messages"], dict):
+                    if warnings := json_exp["error"]["data"]["messages"].get("warning"):
+                        msg = f"{''.join(warnings).strip()}\n"
+                        logger.debug (
+                                "_bconsole_export_volumes unsuccessful\n"
+                                "export command failed: %s\n",len(msg)
+                            )
+                        raise RuntimeError(msg) from json_exp
+
+            # In all other case we get out by raising the original error.
             raise bareos.exceptions.Error(json_exp)
         except bareos.exceptions.Error as berr:
             logger.error("%s\n",berr, exc_info=True)
@@ -462,7 +474,10 @@ class MediaVault():
             dest="return_time",default=90,type=int
         )
         parser.add_argument(
-            "--min_volgb", help="minimal volume size in gigabytes without unit (default 4096GB, 4TB)",
+            "--min_volgb", help=(
+                "minimal volume size in gigabytes without unit"
+                " (default 4096GB, 4TB)"
+            ),
             dest="min_volgb",default=4096,type=int
         )
         parser.add_argument(
@@ -629,7 +644,7 @@ class MediaVault():
             logger.error("Bareos Exception %s\n", berr, exc_info=True)
             return False
         except RuntimeError as error:
-            logger.error(" -- Runtime unknown error -- %s\n",error, exc_info=True)
+            logger.error(" -- Runtime error -- %s\n",error, exc_info=True)
             return False
 
         logger.debug("Volumes exported: %s\n",str(self.volumes_exported))
@@ -835,6 +850,10 @@ class MediaVault():
             self._bconsole_export_volumes()
         except bareos.exceptions.Error as berr:
             msg = f"bconsole export volume failure {berr}\n"
+            logger.error(msg, exc_info=True)
+            raise
+        except RuntimeError as rerr:
+            msg = f"Runtime error during export of volumes {rerr}\n"
             logger.error(msg, exc_info=True)
             raise
         except Exception as err:
