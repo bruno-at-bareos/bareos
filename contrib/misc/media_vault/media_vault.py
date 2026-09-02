@@ -330,6 +330,28 @@ class MediaVault():
                 logger.debug("bconsole export cmd finish ok'\n")
 
         except bareos.exceptions.JsonRpcErrorReceivedException as json_exp:
+            # We need to examine the error message to determine if the failure was caused
+            # by non empty export slots.
+            # So we can display a meaningful error message to the user.
+            # Typical Error message
+            #    {
+            #    "jsonrpc": 2.0,
+            #    "id": "None",
+            #    "error": {
+            #        "code": 1,
+            #        "message": "failed",
+            #        "data": {
+            #        "result": {},
+            #        "messages": {
+            #            "warning": [
+            #            "Deselecting slot XXX doesn't have wanted status.\n",
+            #            "Deselecting slot YYY doesn't have wanted status.\n",
+            #            "Not enough free export slots available to export 24 volumes\n"
+            #            ]
+            #          }
+            #        }
+            #      }
+            #    }
             logger.error("%s\n",json_exp, exc_info=True)
             raise bareos.exceptions.Error(json_exp)
         except bareos.exceptions.Error as berr:
