@@ -354,16 +354,17 @@ class MediaVault():
             #    }
             logger.error("%s\n", json_exp, exc_info=True)
             msg = ""
-            if json_exp["error"]["code"] == 1 and json_exp["error"]["message"] == "failed":
-                if isinstance(json_exp["error"]["data"]["messages"], dict):
-                    if warnings := json_exp["error"]["data"]["messages"].get("warning"):
+            if json_exp.jsondata["error"]["code"] == 1 and json_exp.jsondata["error"]["message"] == "failed":
+                if isinstance(json_exp.jsondata["error"]["data"]["messages"], dict):
+                    if warnings := json_exp.jsondata["error"]["data"]["messages"].get("warning"):
                         msg = f"{''.join(warnings).strip()}\n"
                         logger.debug (
                                 "_bconsole_export_volumes unsuccessful\n"
                                 "export command failed: %s\n",len(msg)
                             )
+                        print("Error/Warnings occurs during volumes export\n")
+                        print(msg)
                         raise RuntimeError(msg) from json_exp
-
             # In all other case we get out by raising the original error.
             raise bareos.exceptions.Error(json_exp)
         except bareos.exceptions.Error as berr:
