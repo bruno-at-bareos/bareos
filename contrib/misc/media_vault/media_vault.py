@@ -354,7 +354,8 @@ class MediaVault():
             #    }
             logger.error("%s\n", json_exp, exc_info=True)
             msg = ""
-            if json_exp.jsondata["error"]["code"] == 1 and json_exp.jsondata["error"]["message"] == "failed":
+            if json_exp.jsondata["error"]["code"] == 1
+               and json_exp.jsondata["error"]["message"] == "failed":
                 if isinstance(json_exp.jsondata["error"]["data"]["messages"], dict):
                     if warnings := json_exp.jsondata["error"]["data"]["messages"].get("warning"):
                         msg = f"{''.join(warnings).strip()}\n"
